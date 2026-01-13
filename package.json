@@ -1,0 +1,36 @@
+{
+  "name": "peru-scanner",
+  "version": "1.0.0",
+  "description": "Aplicación para visualizar cámaras públicas y reportes de emergencias en Perú",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^25.0.6",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
+    "hls.js": "^1.5.7",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.562.0",
+    "next": "^16.1.1",
+    "puppeteer": "^24.35.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-leaflet": "^5.0.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19"
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "apiInfo": {
+    "url": "https://geosinpad.indeci.gob.pe/indeci/rest/services/Emergencias/EMERGENCIAS_SINPAD/FeatureServer/0/query",
+    "descripcion": "API de INDECI para consultar emergencias registradas en el sistema SINPAD (Sistema de Información Nacional para la Respuesta y Rehabilitación)",
+    "filtro": "FECHA >= CURRENT_TIMESTAMP - 1 (últimas 24 horas)"
+  },
+  "estructuraJSON": {
+    "features": [
+      {
+        "attributes": {
+          "OBJECTID": "Identificador único del objeto",
+          "IDE_SINPAD": "Identificador de la emergencia en SINPAD",
+          "FECHA": "Timestamp en milisegundos desde 1970",
+          "ANHO": "Año del evento (ej: 2026)",
+          "MES": "Nombre del mes (ej: ENERO)",
+          "COD_UBIGEO": "Código de ubicación geográfica",
+          "DEPARTAMENTO": "Nombre del departamento (ej: DEPA. LIMA)",
+          "PROVINCIA": "Nombre de la provincia (ej: PROV. HUARAL)",
+          "DISTRITO": "Nombre del distrito (ej: DIST. ATAVILLOS ALTO)",
+          "ST_TEMP": "WKT Point con coordenadas (x: longitud, y: latitud)",
+          "FENOMENO": "Tipo específico del fenómeno",
+          "DES_GRUPAL_FENOMENO": "Categoría general del fenómeno",
+          "REGION": "Región (generalmente null)",
+          "SAFECTA": "Personas afectadas",
+          "SDAMNI": "Daños (generalmente null)",
+          "SFALLE": "Número de fallecidos",
+          "SLESI": "Número de lesionados",
+          "SDESA": "Número de desaparecidos",
+          "NUM_POSX": "Longitud (x)",
+          "NUM_POSY": "Latitud (y)",
+          "FLG_SITUACION": "Estado (A = Activo)"
+        },
+        "geometry": {
+          "x": "Longitud",
+          "y": "Latitud"
+        }
+      }
+    ]
+  },
+  "ejemplosRegistros": [
+    {
+      "idesinpad": 249548,
+      "tipo": "LLUVIAS INTENSAS",
+      "categoria": "PELIGROS HIDROMETEOROLÓGICOS Y OCEANOGRÁFICOS",
+      "ubicacion": {
+        "departamento": "DEPA. LIMA",
+        "provincia": "PROV. HUARAL",
+        "distrito": "DIST. ATAVILLOS ALTO",
+        "coordenadas": {
+          "longitud": -76.6561,
+          "latitud": -11.2342
+        }
+      },
+      "fecha": "2026-01-12T06:00:00Z",
+      "year": 2026,
+      "mes": "ENERO"
+    },
+    {
+      "idesinpad": 249493,
+      "tipo": "DESLIZAMIENTO",
+      "categoria": "PELIGROS DE GEODINÁMICA EXTERNA",
+      "ubicacion": {
+        "departamento": "DEPA. LA LIBERTAD",
+        "provincia": "PROV. PATAZ",
+        "distrito": "DIST. PIAS",
+        "coordenadas": {
+          "longitud": -77.547,
+          "latitud": -7.87225
+        }
+      },
+      "fecha": "2026-01-12T06:00:00Z",
+      "year": 2026,
+      "mes": "ENERO"
+    },
+    {
+      "idesinpad": 249547,
+      "tipo": "VANDALISMO",
+      "categoria": "PELIGROS ANTRÓPICOS",
+      "ubicacion": {
+        "departamento": "DEPA. AMAZONAS",
+        "provincia": "PROV. CHACHAPOYAS",
+        "distrito": "DIST. CHACHAPOYAS",
+        "coordenadas": {
+          "longitud": -77.8743,
+          "latitud": -6.22937
+        }
+      },
+      "fecha": "2026-01-12T06:00:00Z",
+      "year": 2026,
+      "mes": "ENERO"
+    }
+  ],
+  "camposDisponibles": {
+    "identificacion": [
+      "OBJECTID",
+      "IDE_SINPAD",
+      "GLOBALID"
+    ],
+    "ubicacionGeografica": [
+      "DEPARTAMENTO",
+      "PROVINCIA",
+      "DISTRITO",
+      "COD_UBIGEO",
+      "NUM_POSX (Longitud)",
+      "NUM_POSY (Latitud)",
+      "ST_TEMP (WKT Point)"
+    ],
+    "clasificacion": [
+      "FENOMENO (tipo específico)",
+      "DES_GRUPAL_FENOMENO (categoría general)",
+      "REGION"
+    ],
+    "temporal": [
+      "FECHA (timestamp en ms)",
+      "ANHO (año)",
+      "MES (nombre del mes)"
+    ],
+    "afectaciones": [
+      "SAFECTA (personas afectadas)",
+      "SFALLE (fallecidos)",
+      "SLESI (lesionados)",
+      "SDESA (desaparecidos)",
+      "SAFECMVP (viviendas con daño parcial)",
+      "SAFECMVD (viviendas con daño total)",
+      "SDAMNI (daño estructural)"
+    ],
+    "infraestructura": [
+      "SCCEE_AFECTA / SCEE_DESTRU (centros educativos)",
+      "SAFECTA_SALUD / SINHABI_SALUD (establecimientos de salud)",
+      "SCARRE_AFECTA / SCARRE_DESTRU (carreteras)",
+      "SVFERREA_AFECTA / SVFERREA_DESTRU (vías férreas)",
+      "SPUENTE_AFECTA / SPUENTE_DESTRU (puentes)",
+      "SENERGIA_AFECTA / SENERGIA_DESTRU (energía)",
+      "SAGUAPOTA_AFECTA / SAGUAPOTA_DESTRU (agua potable)"
+    ],
+    "estado": [
+      "FLG_SITUACION (A = Activo)"
+    ]
+  },
+  "tiposEmergencias": {
+    "fenomenosHidrometeorológicos": [
+      "LLUVIAS INTENSAS",
+      "INUNDACIÓN POR DESBORDE DE RIO",
+      "DÉFICIT HÍDRICO"
+    ],
+    "fenomenosGeodinámica": [
+      "DESLIZAMIENTO"
+    ],
+    "fenomenosAntrópicos": [
+      "VANDALISMO"
+    ]
+  },
+  "categoriasGenerales": [
+    "PELIGROS HIDROMETEOROLÓGICOS Y OCEANOGRÁFICOS",
+    "PELIGROS DE GEODINÁMICA EXTERNA",
+    "PELIGROS ANTRÓPICOS"
+  ],
+  "coordenadas": {
+    "ubicacion_campos": {
+      "longitud_en_attributes": "NUM_POSX",
+      "latitud_en_attributes": "NUM_POSY",
+      "longitud_en_geometry": "geometry.x",
+      "latitud_en_geometry": "geometry.y",
+      "formato_wkt": "ST_TEMP (ej: 'point (-76.6561 -11.2342)')"
+    },
+    "rango": {
+      "descripcion": "Coordenadas en sistema WGS84",
+      "longitud_minima": -79.1214,
+      "longitud_maxima": -74.223532,
+      "latitud_minima": -13.16401,
+      "latitud_maxima": -6.22937
+    },
+    "hemisferios": "Hemisferio Sur (latitudes negativas), Hemisferio Occidental (longitudes negativas)"
+  },
+  "informacionFecha": {
+    "campo_fecha": "FECHA",
+    "formato": "Timestamp en milisegundos desde 1970 (Unix epoch)",
+    "ejemplo": {
+      "valor_crudo": 1768194000000,
+      "fecha_humana": "2026-01-12T06:00:00Z",
+      "descomposicion": {
+        "año": 2026,
+        "mes": "ENERO",
+        "dia": 12
+      }
+    },
+    "campos_derivados_disponibles": [
+      "ANHO (año como string)",
+      "MES (nombre del mes en español)"
+    ],
+    "observacion": "No hay información de hora específica en minutos/segundos, solo la fecha a nivel de día"
+  },
+  "resumenEstadistico": {
+    "total_emergencias_retornadas": 10,
+    "rango_temporal": "Últimas 24 horas desde la consulta",
+    "departamentos_afectados": [
+      "LIMA",
+      "LA LIBERTAD",
+      "AMAZONAS",
+      "CAJAMARCA",
+      "AYACUCHO",
+      "HUANCAVELICA"
+    ],
+    "fenomeno_mas_comun": "LLUVIAS INTENSAS",
+    "todos_sin_daños_reportados": "Los 10 registros mostrados tienen SAFECTA=0.0 (sin personas directamente afectadas registradas)"
+  }
+}
