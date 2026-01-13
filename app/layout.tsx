@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Peru Scanner - Cámaras y Emergencias',
+  title: 'Alerta Perú - Cámaras y Emergencias',
   description: 'Visualiza cámaras públicas y reportes de emergencias en Perú en tiempo real',
   keywords: ['Perú', 'Lima', 'cámaras públicas', 'emergencias', 'INDECI', 'tráfico'],
 }

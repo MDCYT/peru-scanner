@@ -41,15 +41,10 @@ export async function getEmergencias(): Promise<Emergencia[]> {
   try {
     // Obtener emergencias de ambas fuentes
     const todas = await getTodasEmergencias();
-    if (todas.length > 0) {
-      return todas;
-    }
-    
-    // Fallback a datos mock si falla
-    return getMockEmergencias();
+    return todas;
   } catch (error) {
     console.error('Error al obtener emergencias:', error);
-    return getMockEmergencias();
+    return [];
   }
 }
 

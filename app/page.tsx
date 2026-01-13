@@ -75,10 +75,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🇵🇪</span>
+              <span className="text-2xl" role="img" aria-label="Bandera de Perú">&#x1F1F5;&#x1F1EA;</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Peru Scanner</h1>
+              <h1 className="text-2xl font-bold">Alerta Perú</h1>
               <p className="text-sm text-red-100">Cámaras Públicas y Reportes de Emergencias</p>
             </div>
           </div>

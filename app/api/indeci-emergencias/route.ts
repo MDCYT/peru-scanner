@@ -190,18 +190,22 @@ export async function GET() {
       });
     }
 
-    // Si no hay datos frescos, devolver caché expirado si existe
+    // Si no hay datos nuevos pero hay caché, mantener el caché viejo
     if (cachedEmergenciasINDECI) {
-      console.log("⚠️ INDECI: Usando caché expirado como fallback");
+      const cacheAge = Math.floor((now - cachedEmergenciasINDECI.timestamp) / 60000);
+      console.log(`⚠️ INDECI: No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
       return NextResponse.json({
         success: true,
         count: cachedEmergenciasINDECI.data.length,
         data: cachedEmergenciasINDECI.data,
-        source: "expired-cache",
+        source: "cache-stale",
+        cacheAge: cacheAge,
         timestamp: new Date(cachedEmergenciasINDECI.timestamp).toISOString(),
       });
     }
 
+    // No hay datos ni caché
+    console.log('⚠️ INDECI: No hay datos disponibles');
     return NextResponse.json({
       success: false,
       count: 0,
@@ -211,22 +215,28 @@ export async function GET() {
   } catch (error) {
     console.error("❌ INDECI route error:", error);
 
-    // Fallback a caché expirado
+    // Fallback a caché expirado si existe
     if (cachedEmergenciasINDECI) {
+      const cacheAge = Math.floor((Date.now() - cachedEmergenciasINDECI.timestamp) / 60000);
+      console.log(`⚠️ INDECI: Error al obtener datos, usando caché (${cacheAge} minutos)`);
       return NextResponse.json({
         success: true,
         count: cachedEmergenciasINDECI.data.length,
         data: cachedEmergenciasINDECI.data,
-        source: "expired-cache-fallback",
+        source: "cache-expired-fallback",
+        cacheAge: cacheAge,
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date(cachedEmergenciasINDECI.timestamp).toISOString(),
       });
     }
 
+    // Sin caché, retornar vacío
+    console.error('❌ INDECI: No hay datos ni caché disponible');
     return NextResponse.json({
       success: false,
       count: 0,
       data: [],
-      error: "Failed to fetch INDECI data",
+      error: error instanceof Error ? error.message : "Failed to fetch INDECI data",
     });
   }
 }

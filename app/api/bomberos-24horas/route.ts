@@ -240,43 +240,7 @@ async function parseBomberos24HorasReal(): Promise<BomberosEmergencia[]> {
   throw new Error('Failed to fetch bomberos data after all retries');
 }
 
-/**
- * Datos mock para fallback
- */
-function getMockBomberosEmergencias(): BomberosEmergencia[] {
-  return [
-    {
-      id: '2026001565',
-      numparte: '2026001565',
-      tipo: 'EMERGENCIA MEDICA',
-      ubicacion: 'AV. SAN FELIPE (-12.0828,-77.0513) Nro. 601 - JESUS MARIA',
-      distrito: 'JESUS MARIA',
-      hora: parsePeruDate('12/01/2026 08:30:54 p.m.'),
-      latitud: -12.0828,
-      longitud: -77.0513,
-    },
-    {
-      id: '2026001563',
-      numparte: '2026001563',
-      tipo: 'INCENDIO URBANO',
-      ubicacion: 'Av. Abancay cdra. 5 (-12.0486,-77.0431) - Cercado de Lima',
-      distrito: 'Cercado de Lima',
-      hora: parsePeruDate('12/01/2026 02:35:00 p.m.'),
-      latitud: -12.0486,
-      longitud: -77.0431,
-    },
-    {
-      id: '2026001561',
-      numparte: '2026001561',
-      tipo: 'ACCIDENTE DE TRANSITO',
-      ubicacion: 'Av. Javier Prado Este (-12.0893,-76.9981) - San Borja',
-      distrito: 'San Borja',
-      hora: parsePeruDate('12/01/2026 02:28:00 p.m.'),
-      latitud: -12.0893,
-      longitud: -76.9981,
-    },
-  ];
-}
+
 
 export async function GET() {
   try {
@@ -319,14 +283,28 @@ export async function GET() {
       });
     }
 
-    // Si no hay datos, retornar mock
-    console.log('⚠️ No real data found, returning mock data');
-    const mockData = getMockBomberosEmergencias();
+    // Si no hay datos nuevos pero hay caché, mantener el caché viejo
+    if (cachedEmergencias) {
+      const cacheAge = Math.floor((now - cachedEmergencias.timestamp) / 1000 / 60);
+      console.log(`⚠️ No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
+      
+      return NextResponse.json({
+        success: true,
+        count: cachedEmergencias.data.length,
+        data: cachedEmergencias.data,
+        source: 'cache-stale',
+        cacheAge: `${cacheAge} minutos`,
+        timestamp: new Date(cachedEmergencias.timestamp).toISOString(),
+      });
+    }
+
+    // No hay datos ni caché - retornar vacío
+    console.log('⚠️ No hay datos disponibles');
     return NextResponse.json({
-      success: true,
-      count: mockData.length,
-      data: mockData,
-      source: 'mock',
+      success: false,
+      count: 0,
+      data: [],
+      source: 'none',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -341,21 +319,21 @@ export async function GET() {
         success: true,
         count: cachedEmergencias.data.length,
         data: cachedEmergencias.data,
-        source: 'cache (expired, fallback)',
+        source: 'cache-expired-fallback',
         cacheAge: `${cacheAge} minutos`,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date(cachedEmergencias.timestamp).toISOString(),
       });
     }
     
-    // En caso de error sin caché, retornar mock data como último recurso
-    const mockData = getMockBomberosEmergencias();
+    // En caso de error sin caché, retornar vacío
+    console.error('❌ No hay datos ni caché disponible');
     return NextResponse.json(
       {
-        success: true,
-        count: mockData.length,
-        data: mockData,
-        source: 'mock (fallback)',
+        success: false,
+        count: 0,
+        data: [],
+        source: 'none',
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
