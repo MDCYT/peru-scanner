@@ -9,7 +9,7 @@ import { getEmergencias } from '@/services/indeciService';
 import Dashboard from '@/components/Dashboard/Dashboard';
 import CameraViewer from '@/components/CameraViewer/CameraViewer';
 
-const MapContainer = dynamic(() => import('@/components/Map/MapContainer'), {
+const HackerMapContainer = dynamic(() => import('@/components/Map/HackerMapContainer'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-black">
@@ -43,14 +43,17 @@ export default function HackerMode() {
     
     let messageIndex = 0;
     let charIndex = 0;
+    let currentText = '';
     
     const typeWriter = setInterval(() => {
       if (messageIndex < messages.length) {
         if (charIndex < messages[messageIndex].length) {
-          setTerminalText(prev => prev + messages[messageIndex][charIndex]);
+          currentText += messages[messageIndex][charIndex];
+          setTerminalText(currentText);
           charIndex++;
         } else {
-          setTerminalText(prev => prev + '\n');
+          currentText += '\n';
+          setTerminalText(currentText);
           messageIndex++;
           charIndex = 0;
         }
@@ -320,16 +323,14 @@ export default function HackerMode() {
             </div>
           ) : (
             <div className="relative w-full h-full">
-              <div className="absolute inset-0" style={{ filter: 'hue-rotate(90deg) saturate(1.5)' }}>
-                <MapContainer
-                  cameras={cameras}
-                  emergencias={emergencias}
-                  showCameras={showCameras}
-                  showEmergencies={showEmergencies}
-                  emergencyFilter={emergencyFilter}
-                  onCameraClick={handleCameraClick}
-                />
-              </div>
+              <HackerMapContainer
+                cameras={cameras}
+                emergencias={emergencias}
+                showCameras={showCameras}
+                showEmergencies={showEmergencies}
+                emergencyFilter={emergencyFilter}
+                onCameraClick={handleCameraClick}
+              />
             </div>
           )}
 

@@ -41,6 +41,10 @@ Al completar la secuencia correctamente, serás redirigido automáticamente a la
 - **Efectos de brillo**: Sombras y resplandores tipo neón
 - **Animaciones**: Cursor parpadeante, líneas de escaneo, efecto matriz
 - **Tematización completa**: Dashboard, leyenda, header, todo transformado
+- **Mapa oscuro**: Usa CartoDB Dark Matter con filtros para estilo hacker/Matrix
+- **Marcadores neón**: Iconos de cámaras y emergencias con efectos de brillo
+- **Popups personalizados**: Ventanas emergentes con tema Matrix
+- **Terminal de autenticación**: Secuencia de inicio tipo película hacker
 - **Botón EXIT**: Para volver al modo normal
 
 ### Acceso Directo

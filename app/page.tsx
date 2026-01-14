@@ -50,21 +50,22 @@ export default function HomePage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       setKonamiKeys(prev => {
         const newKeys = [...prev, e.key];
-        const lastKeys = newKeys.slice(-konamiCode.length);
         
-        // Verificar si coincide con el código Konami
-        const isMatch = lastKeys.every((key, index) => 
-          key.toLowerCase() === konamiCode[index].toLowerCase()
-        );
-        
-        if (isMatch) {
-          // ¡Código Konami activado!
-          router.push('/hacker');
-          return [];
+        // Verificar si coincide con el código Konami solo si tenemos exactamente 10 teclas
+        if (newKeys.length === konamiCode.length) {
+          const isMatch = newKeys.every((key, index) => 
+            key.toLowerCase() === konamiCode[index].toLowerCase()
+          );
+          
+          if (isMatch) {
+            // ¡Código Konami activado!
+            router.push('/hacker');
+            return [];
+          }
         }
         
         // Mantener solo los últimos 10 keys
-        return newKeys.slice(-10);
+        return newKeys.slice(-konamiCode.length);
       });
     };
 
