@@ -423,7 +423,7 @@ function getMockCameras(): Camera[] {
       urlStream: 'https://hd-auth.skylinewebcams.com/live.m3u8',
       specialCamera: {
         provider: 'SkylineWebcams',
-        url: "https://www.skylinewebcams.com/en/webcam/peru/amazonas/bongara/cocachimba/timelapse.html"
+        url: "https://www.skylinewebcams.com/en/webcam/peru/amazonas/bongara/cocachimba.html"
       },
      }, 
      {
