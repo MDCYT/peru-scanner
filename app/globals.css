@@ -70,3 +70,79 @@ body {
   height: 40px;
   animation: spin 1s linear infinite;
 }
+
+/* Hacker Theme Overrides */
+.hacker-dashboard h2,
+.hacker-dashboard h3 {
+  color: #00ff41 !important;
+  font-family: 'Courier New', monospace !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.hacker-dashboard .bg-white {
+  background: rgba(0, 20, 0, 0.8) !important;
+  border: 1px solid #00ff41 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.3) !important;
+}
+
+.hacker-dashboard .text-gray-800,
+.hacker-dashboard .text-gray-700,
+.hacker-dashboard .text-gray-600 {
+  color: #00ff41 !important;
+}
+
+.hacker-dashboard .bg-blue-50,
+.hacker-dashboard .bg-green-50,
+.hacker-dashboard .bg-purple-50,
+.hacker-dashboard .bg-red-50,
+.hacker-dashboard .bg-orange-50,
+.hacker-dashboard .bg-yellow-50,
+.hacker-dashboard .bg-sky-50 {
+  background: rgba(0, 255, 65, 0.05) !important;
+  border: 1px solid rgba(0, 255, 65, 0.3) !important;
+}
+
+.hacker-dashboard .text-blue-600,
+.hacker-dashboard .text-green-600,
+.hacker-dashboard .text-purple-600,
+.hacker-dashboard .text-red-600,
+.hacker-dashboard .text-orange-600,
+.hacker-dashboard .text-yellow-600,
+.hacker-dashboard .text-sky-600 {
+  color: #00ff41 !important;
+}
+
+.hacker-dashboard .text-blue-700,
+.hacker-dashboard .text-green-700,
+.hacker-dashboard .text-purple-700,
+.hacker-dashboard .text-red-700,
+.hacker-dashboard .text-orange-700,
+.hacker-dashboard .text-yellow-700,
+.hacker-dashboard .text-sky-700 {
+  color: #00cc33 !important;
+  text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+}
+
+.hacker-dashboard input[type="checkbox"] {
+  accent-color: #00ff41;
+  filter: drop-shadow(0 0 3px rgba(0, 255, 65, 0.5));
+}
+
+.hacker-dashboard .bg-gray-50 {
+  background: rgba(0, 10, 0, 0.5) !important;
+  border-color: rgba(0, 255, 65, 0.2) !important;
+}
+
+.hacker-dashboard .bg-gray-300 {
+  background: rgba(0, 255, 65, 0.2) !important;
+  color: #00ff41 !important;
+}
+
+.hacker-dashboard .hover\:bg-gray-100:hover,
+.hacker-dashboard .hover\:bg-white:hover {
+  background: rgba(0, 255, 65, 0.1) !important;
+}
+
+.hacker-dashboard svg {
+  filter: drop-shadow(0 0 3px rgba(0, 255, 65, 0.3));
+}

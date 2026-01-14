@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Camera, Emergencia } from '@/types';
 import { getCameras } from '@/services/camerasService';
@@ -19,6 +20,7 @@ const MapContainer = dynamic(() => import('@/components/Map/MapContainer'), {
 });
 
 export default function HomePage() {
+  const router = useRouter();
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [emergencias, setEmergencias] = useState<Emergencia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,47 @@ export default function HomePage() {
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showInfoBanner, setShowInfoBanner] = useState(true);
+  const [konamiKeys, setKonamiKeys] = useState<string[]>([]);
+
+  // Detector del código Konami
+  useEffect(() => {
+    const konamiCode = [
+      'ArrowUp',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowLeft',
+      'ArrowRight',
+      'b',
+      'a',
+    ];
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      setKonamiKeys(prev => {
+        const newKeys = [...prev, e.key];
+        const lastKeys = newKeys.slice(-konamiCode.length);
+        
+        // Verificar si coincide con el código Konami
+        const isMatch = lastKeys.every((key, index) => 
+          key.toLowerCase() === konamiCode[index].toLowerCase()
+        );
+        
+        if (isMatch) {
+          // ¡Código Konami activado!
+          router.push('/hacker');
+          return [];
+        }
+        
+        // Mantener solo los últimos 10 keys
+        return newKeys.slice(-10);
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [router]);
 
   useEffect(() => {
     async function loadData() {
