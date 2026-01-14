@@ -71,7 +71,7 @@ function getMockCameras(): Camera[] {
       nombre: 'Cámara Av. Brasil con Av. Javier Prado - Magdalena del Mar',
       ubicacion: 'Av. Brasil con Av. Javier Prado',
       direccion: 'Av. Brasil, Magdalena del Mar 15086',
-      latitud: -12.089892, 
+      latitud: -12.089892,
       longitud: -77.065907,
       estado: 'Operativo',
       tipo: 'Tráfico',
@@ -149,7 +149,7 @@ function getMockCameras(): Camera[] {
       nombre: 'Cámara Av. La Marina - Pueblo Libre',
       ubicacion: 'Cuadra 7 - Pueblo Libre',
       direccion: 'Av. La Marina cdra. 7',
-      latitud: -12.077946, 
+      latitud: -12.077946,
       longitud: -77.090305,
       estado: 'En Mantenimiento',
       tipo: 'Tráfico',
@@ -176,7 +176,7 @@ function getMockCameras(): Camera[] {
       nombre: 'Webcam Óvalo de Miraflores',
       ubicacion: 'Óvalo de Miraflores',
       direccion: 'Av. Arequipa con Av. Diagonal',
-      latitud: -12.119611, 
+      latitud: -12.119611,
       longitud: -77.028922,
       estado: 'Operativo',
       tipo: 'Tráfico',
@@ -193,7 +193,7 @@ function getMockCameras(): Camera[] {
       nombre: 'Webcam Parque Kennedy - Miraflores',
       ubicacion: 'Parque Kennedy, Miraflores',
       direccion: 'Av. Larco con Av. Diagonal',
-      latitud: -12.122008, 
+      latitud: -12.122008,
       longitud: -77.030198,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -295,7 +295,7 @@ function getMockCameras(): Camera[] {
       nombre: 'Webcam Playa el Silencio - Punta Hermosa',
       ubicacion: 'Playa el Silencio, Punta Hermosa',
       direccion: 'Punta Hermosa',
-      latitud: -12.324401, 
+      latitud: -12.324401,
       longitud: -76.836256,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -366,20 +366,20 @@ function getMockCameras(): Camera[] {
       zona: 'Norte',
       urlStream: 'https://live.smartechlatam.online/claro/republicapanama/index.m3u8',
     },
-     {
+    {
       id: '21',
       nombre: 'Cámara Av. Del Ejército - Miraflores',
       ubicacion: 'Av. Del Ejército Cuadra 12 - Miraflores',
       direccion: 'Av. del Ejército 1289, Lima 15074',
-      latitud: -12.110546, 
+      latitud: -12.110546,
       longitud: -77.051235,
       estado: 'Operativo',
       tipo: 'Tráfico',
       distrito: 'Miraflores',
       zona: 'Norte',
       urlStream: 'https://live.smartechlatam.online/claro/ejercito/index.m3u8',
-     },
-     {
+    },
+    {
       id: '22',
       nombre: 'Cámara Panamericana Sur - Surco',
       ubicacion: 'Panamericana Sur, Puente Atocongo',
@@ -391,13 +391,13 @@ function getMockCameras(): Camera[] {
       distrito: 'Santiago de Surco',
       zona: 'Norte',
       urlStream: 'https://live.smartechlatam.online/claro/panamericana/index.m3u8',
-     },
-     {
+    },
+    {
       id: '23',
       nombre: 'Webcam Plaza Mayor de Chachapoyas - Amazonas',
       ubicacion: 'Plaza Mayor, Chachapoyas',
       direccion: 'Plaza de Armas, Chachapoyas',
-      latitud: -6.229823, 
+      latitud: -6.229823,
       longitud: -77.871891,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -408,13 +408,13 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/amazonas/chachapoyas/plaza-mayor.html"
       },
-     },
-     {
+    },
+    {
       id: '24',
       nombre: 'Webcam Cochibamba - Amazonas',
       ubicacion: 'Cochibamba, Amazonas',
       direccion: 'Cochibamba, Amazonas',
-      latitud: -6.058081, 
+      latitud: -6.058081,
       longitud: -77.894238,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -425,26 +425,26 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/amazonas/bongara/cocachimba.html"
       },
-     }, 
-     {
+    },
+    {
       id: '25',
       nombre: 'Webcam Casayohana - Apurimac',
       ubicacion: 'Casayohana, Apurimac',
       direccion: 'Casayohana, Apurimac',
-      latitud: -13.653931, 
+      latitud: -13.653931,
       longitud: -73.423530,
       estado: 'Operativo',
       tipo: 'Vigilancia',
       distrito: 'Talavera',
       zona: 'Centro',
       urlStream: 'https://webcam.casayohana.org/memfs/2b4fa21f-109a-427c-b4ad-205a7f16c879.m3u8',
-     }, 
-     {
+    },
+    {
       id: '26',
       nombre: 'Webcam Plaza Mayor de Arequipa - Arequipa',
       ubicacion: 'Plaza Mayor, Arequipa',
       direccion: 'Portal de Flores 112, Arequipa 04001',
-      latitud: -16.398854, 
+      latitud: -16.398854,
       longitud: -71.536175,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -455,13 +455,13 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/arequipa/arequipa/plaza-mayor.html"
       },
-     },
-     {
+    },
+    {
       id: '27',
       nombre: 'Webcam Laguna San Nicolás - Cajamarca',
       ubicacion: 'Laguna San Nicolás, Cajamarca',
       direccion: 'CA-1465, Namora 06370',
-      latitud: -7.235659, 
+      latitud: -7.235659,
       longitud: -78.349348,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -472,8 +472,8 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/cajamarca/cajamarca/laguna-san-nicolas.html"
       },
-     },
-     {
+    },
+    {
       id: '28',
       nombre: 'Webcam Playa Huanchaco - La Libertad',
       ubicacion: 'Playa Huanchaco, Trujillo',
@@ -489,13 +489,13 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/department-of-la-libertad/trujillo/trujillo-huanchaco.html"
       },
-     },
-     {
+    },
+    {
       id: '29',
       nombre: 'Webcam Plaza de Armas de Oxapampa - Pasco',
       ubicacion: 'Plaza de Armas, Oxapampa',
       direccion: 'Av. San Martin N°451, Oxapampa 19231',
-      latitud: -10.573169, 
+      latitud: -10.573169,
       longitud: -75.404586,
       estado: 'Operativo',
       tipo: 'Vigilancia',
@@ -506,6 +506,19 @@ function getMockCameras(): Camera[] {
         provider: 'SkylineWebcams',
         url: "https://www.skylinewebcams.com/en/webcam/peru/pasco/oxapampa/plaza-de-armas.html"
       },
-     }
+    },
+    {
+      id: '30',
+      nombre: 'Webcam Cordillera Blanca - Ancash',
+      ubicacion: 'Cordillera Blanca, Huaraz',
+      direccion: 'Huaraz, Ancash',
+      latitud: -9.5279453,
+      longitud: -77.5328862,
+      estado: 'Operativo',
+      tipo: 'Vigilancia',
+      distrito: 'Huaraz',
+      zona: 'Centro',
+      urlStream: 'https://storm.webcamvibe.com/hls/stream.m3u8'
+    }
   ];
 }
