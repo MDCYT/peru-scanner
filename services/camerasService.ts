@@ -17,7 +17,7 @@ export async function getCameraById(id: string): Promise<Camera | null> {
  * Datos de ejemplo de cámaras de Lima (para desarrollo y fallback)
  * Basado en ubicaciones reales de cámaras conocidas
  */
-function getCameras(): Camera[] {
+export function getCameras(): Camera[] {
   return [
     {
       id: '1',

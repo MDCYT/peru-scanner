@@ -20,21 +20,6 @@ export async function getEmergenciasDatasetInfo() {
 }
 
 /**
- * Descarga y procesa datos de emergencias de un año específico
- * NOTA: Los datos vienen en formato CSV/Excel, esta función es una simulación
- */
-export async function getEmergenciasByYear(year: number): Promise<Emergencia[]> {
-  try {
-    // En producción, aquí se descargaría y procesaría el archivo CSV/Excel
-    // Por ahora, retornamos datos de ejemplo
-    return getMockEmergencias();
-  } catch (error) {
-    console.error(`Error al obtener emergencias del año ${year}:`, error);
-    return getMockEmergencias();
-  }
-}
-
-/**
  * Obtiene todas las emergencias disponibles
  */
 export async function getEmergencias(): Promise<Emergencia[]> {
@@ -69,7 +54,7 @@ export async function getBomberos24Horas(): Promise<Emergencia[]> {
       return [];
     }
 
-    console.log(`📍 Processing ${emergenciasArray.length} bomberos emergencies from ${apiResponse.source || 'unknown'}`);
+    console.log(`Processing ${emergenciasArray.length} bomberos emergencies from ${apiResponse.source || 'unknown'}`);
 
     // Transformar emergencias de bomberos al formato Emergencia
     return emergenciasArray.map((emerg: any) => ({
@@ -93,6 +78,7 @@ export async function getBomberos24Horas(): Promise<Emergencia[]> {
           : undefined,
       descripcion: `Reporte ${emerg.numparte}`,
       estado: 'Activo',
+      fuente: 'bomberos',
     }));
   } catch (error) {
     console.error('Error al obtener emergencias de bomberos:', error);
@@ -120,7 +106,7 @@ export async function getIndeci24Horas(): Promise<Emergencia[]> {
       return [];
     }
 
-    console.log(`📍 Processing ${emergenciasArray.length} INDECI emergencies from ${apiResponse.source || 'unknown'}`);
+    console.log(`Processing ${emergenciasArray.length} INDECI emergencies from ${apiResponse.source || 'unknown'}`);
 
     // Transformar emergencias de INDECI al formato Emergencia
     return emergenciasArray.map((emerg: any) => ({
@@ -144,6 +130,7 @@ export async function getIndeci24Horas(): Promise<Emergencia[]> {
           : undefined,
       descripcion: emerg.descripcion || `Emergencia ${emerg.tipo}`,
       estado: 'Activo',
+      fuente: 'indeci',
     }));
   } catch (error) {
     console.error('Error al obtener emergencias de INDECI:', error);

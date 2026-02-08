@@ -190,27 +190,15 @@ export async function GET() {
       });
     }
 
-    // Si no hay datos nuevos pero hay caché, mantener el caché viejo
-    if (cachedEmergenciasINDECI) {
-      const cacheAge = Math.floor((now - cachedEmergenciasINDECI.timestamp) / 60000);
-      console.log(`INDECI: No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
-      return NextResponse.json({
-        success: true,
-        count: cachedEmergenciasINDECI.data.length,
-        data: cachedEmergenciasINDECI.data,
-        source: "cache-stale",
-        cacheAge: cacheAge,
-        timestamp: new Date(cachedEmergenciasINDECI.timestamp).toISOString(),
-      });
-    }
-
-    // No hay datos ni caché
-    console.log('INDECI: No hay datos disponibles');
+    // Si no hay datos nuevos, retornar vacío (no usar caché viejo)
+    // Esto garantiza que solo mostramos emergencias realmente de las últimas 24h
+    console.log('INDECI: No hay datos nuevos en las últimas 24 horas');
     return NextResponse.json({
-      success: false,
+      success: true,
       count: 0,
       data: [],
-      error: "No data available",
+      source: "real",
+      timestamp: new Date(now).toISOString(),
     });
   } catch (error) {
     console.error("INDECI route error:", error);

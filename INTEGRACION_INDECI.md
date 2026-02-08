@@ -99,7 +99,7 @@ Cambios:
   - ☔ Nube con lluvia (lluvia intensa)
   - 🏔️ Montaña/tierra (deslizamiento)
   - 🌊 Ondas de agua (inundación)
-  - 📍 Ondas sísmicas (sismo)
+  - Ondas sísmicas (sismo)
   - ❄️ Copo de nieve (helada)
   - 🌱 Grieta en tierra (sequía)
   - 🔥 Árbol en llamas (incendio forestal)

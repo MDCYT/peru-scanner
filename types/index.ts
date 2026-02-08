@@ -45,6 +45,7 @@ export interface Emergencia {
   };
   descripcion?: string;
   estado?: string;
+  fuente?: 'bomberos' | 'indeci';
 }
 
 // Tipo para los filtros del mapa

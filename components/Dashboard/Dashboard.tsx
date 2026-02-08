@@ -54,8 +54,8 @@ export default function Dashboard({
   });
 
   // Estadísticas por fuente
-  const emergenciasBomberos = emergenciasRecientes.filter((e) => e.tipoEmergencia && e.tipoEmergencia.includes('EMERGENCIA MEDICA') || e.tipoEmergencia.includes('INCENDIO') || e.tipoEmergencia.includes('ACCIDENTE') || e.tipoEmergencia.includes('RESCATE') || e.tipoEmergencia.includes('MATERIALES') || e.tipoEmergencia.includes('SERVICIO'));
-  const emergenciasINDECI = emergenciasRecientes.filter((e) => e.tipoEmergencia && (e.tipoEmergencia.includes('LLUVIA') || e.tipoEmergencia.includes('DESLIZ') || e.tipoEmergencia.includes('INUNDA') || e.tipoEmergencia.includes('SISMO') || e.tipoEmergencia.includes('HELADA') || e.tipoEmergencia.includes('SEQUIA') || e.tipoEmergencia.includes('FORESTAL') || e.tipoEmergencia.includes('VANDALISMO')));
+  const emergenciasBomberos = emergenciasRecientes.filter((e) => e.fuente === 'bomberos');
+  const emergenciasINDECI = emergenciasRecientes.filter((e) => e.fuente === 'indeci');
 
   // Manejar cambio de filtro
   const handleFilterToggle = (tipo: string) => {
