@@ -115,11 +115,11 @@ async function fetchIndeciBruto(): Promise<EmergenciaFormato[]> {
     const data = (await response.json()) as IndeciBruta;
 
     if (!data.features || data.features.length === 0) {
-      console.log("⚠️ INDECI: No features returned");
+      console.log("INDECI: No features returned");
       return [];
     }
 
-    console.log(`✅ INDECI: ${data.features.length} emergencias obtenidas`);
+    console.log(`INDECI: ${data.features.length} emergencias obtenidas`);
 
     const emergencias: EmergenciaFormato[] = data.features.map((feature, idx) => ({
       id: `indeci-${feature.attributes.OBJECTID || idx}`,
@@ -139,7 +139,7 @@ async function fetchIndeciBruto(): Promise<EmergenciaFormato[]> {
 
     return emergencias;
   } catch (error) {
-    console.error("❌ Error fetching INDECI:", error);
+    console.error("Error fetching INDECI:", error);
     return [];
   }
 }
@@ -157,7 +157,7 @@ export async function GET() {
         (now - cachedEmergenciasINDECI.timestamp) / 60000
       );
       console.log(
-        `💾 INDECI: Usando datos en caché (${cacheAgeMinutes} minutos)`
+        `INDECI: Usando datos en caché (${cacheAgeMinutes} minutos)`
       );
 
       return NextResponse.json({
@@ -171,7 +171,7 @@ export async function GET() {
     }
 
     // Caché expirado o no existe - obtener datos frescos
-    console.log("🔄 INDECI: Caché expirado o no existe, obteniendo datos frescos");
+    console.log("INDECI: Caché expirado o no existe, obteniendo datos frescos");
 
     const emergencias = await fetchIndeciBruto();
 
@@ -193,7 +193,7 @@ export async function GET() {
     // Si no hay datos nuevos pero hay caché, mantener el caché viejo
     if (cachedEmergenciasINDECI) {
       const cacheAge = Math.floor((now - cachedEmergenciasINDECI.timestamp) / 60000);
-      console.log(`⚠️ INDECI: No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
+      console.log(`INDECI: No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
       return NextResponse.json({
         success: true,
         count: cachedEmergenciasINDECI.data.length,
@@ -205,7 +205,7 @@ export async function GET() {
     }
 
     // No hay datos ni caché
-    console.log('⚠️ INDECI: No hay datos disponibles');
+    console.log('INDECI: No hay datos disponibles');
     return NextResponse.json({
       success: false,
       count: 0,
@@ -213,12 +213,12 @@ export async function GET() {
       error: "No data available",
     });
   } catch (error) {
-    console.error("❌ INDECI route error:", error);
+    console.error("INDECI route error:", error);
 
     // Fallback a caché expirado si existe
     if (cachedEmergenciasINDECI) {
       const cacheAge = Math.floor((Date.now() - cachedEmergenciasINDECI.timestamp) / 60000);
-      console.log(`⚠️ INDECI: Error al obtener datos, usando caché (${cacheAge} minutos)`);
+      console.log(`INDECI: Error al obtener datos, usando caché (${cacheAge} minutos)`);
       return NextResponse.json({
         success: true,
         count: cachedEmergenciasINDECI.data.length,
@@ -231,7 +231,7 @@ export async function GET() {
     }
 
     // Sin caché, retornar vacío
-    console.error('❌ INDECI: No hay datos ni caché disponible');
+    console.error('INDECI: No hay datos ni caché disponible');
     return NextResponse.json({
       success: false,
       count: 0,

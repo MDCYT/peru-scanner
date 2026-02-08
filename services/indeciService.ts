@@ -95,7 +95,7 @@ export async function getBomberos24Horas(): Promise<Emergencia[]> {
       estado: 'Activo',
     }));
   } catch (error) {
-    console.error('❌ Error al obtener emergencias de bomberos:', error);
+    console.error('Error al obtener emergencias de bomberos:', error);
     return [];
   }
 }
@@ -146,7 +146,7 @@ export async function getIndeci24Horas(): Promise<Emergencia[]> {
       estado: 'Activo',
     }));
   } catch (error) {
-    console.error('❌ Error al obtener emergencias de INDECI:', error);
+    console.error('Error al obtener emergencias de INDECI:', error);
     return [];
   }
 }
@@ -164,11 +164,11 @@ export async function getTodasEmergencias(): Promise<Emergencia[]> {
     // Combinar ambas fuentes y evitar duplicados
     const todas = [...bomberosEmerg, ...indeciEmerg];
     
-    console.log(`✅ Total emergencias: ${todas.length} (Bomberos: ${bomberosEmerg.length}, INDECI: ${indeciEmerg.length})`);
+    console.log(`Total emergencias: ${todas.length} (Bomberos: ${bomberosEmerg.length}, INDECI: ${indeciEmerg.length})`);
     
     return todas;
   } catch (error) {
-    console.error('❌ Error al obtener todas las emergencias:', error);
+    console.error('Error al obtener todas las emergencias:', error);
     return [];
   }
 }

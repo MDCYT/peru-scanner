@@ -1,52 +1,5 @@
 import axios from 'axios';
 import { Camera } from '@/types';
-
-// URL base de la API de la Municipalidad de Lima
-const MUNLIMA_API_BASE = 'http://api.datosabiertos.munlima.gob.pe/api/v2/datastreams';
-const CAMERAS_DATASTREAM_ID = 'UBICA-DE-CAMAR-GSGC-69245';
-
-// NOTA: La API key debe obtenerse contactando a datosabiertos@munlima.gob.pe
-// Por ahora, intentaremos sin auth_key o usando un proxy
-const API_KEY = process.env.NEXT_PUBLIC_MUNLIMA_API_KEY || '';
-
-/**
- * Obtiene la lista de cámaras públicas de Lima
- */
-export async function getCameras(): Promise<Camera[]> {
-  try {
-    const url = `${MUNLIMA_API_BASE}/${CAMERAS_DATASTREAM_ID}/data.json/`;
-    const params: any = { limit: 1000 };
-
-    if (API_KEY) {
-      params.auth_key = API_KEY;
-    }
-
-    const response = await axios.get(url, { params });
-
-    // Transformar los datos al formato de nuestro tipo Camera
-    // NOTA: La estructura exacta de la respuesta puede variar
-    // Ajustar según la respuesta real de la API
-    const cameras: Camera[] = response.data.data?.map((item: any) => ({
-      id: item.id || item.ID || String(Math.random()),
-      nombre: item.nombre || item.NOMBRE || item.name || 'Cámara sin nombre',
-      ubicacion: item.ubicacion || item.UBICACION || '',
-      direccion: item.direccion || item.DIRECCION || item.address || '',
-      latitud: parseFloat(item.latitud || item.LATITUD || item.lat || -12.0464),
-      longitud: parseFloat(item.longitud || item.LONGITUD || item.lng || -77.0428),
-      estado: item.estado || item.ESTADO || 'Operativo',
-      tipo: item.tipo || item.TIPO || 'Vigilancia',
-      distrito: item.distrito || item.DISTRITO || '',
-      zona: item.zona || item.ZONA || '',
-    })) || [];
-
-    return cameras;
-  } catch (error) {
-    console.error('Error al obtener cámaras:', error);
-    // Retornar datos de ejemplo en caso de error
-    return getMockCameras();
-  }
-}
-
 /**
  * Obtiene información de una cámara específica
  */
@@ -64,7 +17,7 @@ export async function getCameraById(id: string): Promise<Camera | null> {
  * Datos de ejemplo de cámaras de Lima (para desarrollo y fallback)
  * Basado en ubicaciones reales de cámaras conocidas
  */
-function getMockCameras(): Camera[] {
+function getCameras(): Camera[] {
   return [
     {
       id: '1',

@@ -135,14 +135,14 @@ Ejemplo:
 - Cada API es independiente
 - Si una API falla, se intenta nuevamente con proxies/retry
 - Fallback a caché expirado si se agota el retry
-- Logs en consola indican `💾 Using cache` vs `🔄 Fresh data`
+- Logs en consola indican `Using cache` vs `Fresh data`
 
 ## Respuesta del Servidor
 
 El terminal muestra:
 ```
-✅ INDECI: 51 emergencias obtenidas
-✅ Total emergencias: 174 (Bomberos: 123, INDECI: 51)
+INDECI: 51 emergencias obtenidas
+Total emergencias: 174 (Bomberos: 123, INDECI: 51)
 ```
 
 ## Testing

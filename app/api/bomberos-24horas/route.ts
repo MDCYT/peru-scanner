@@ -35,7 +35,7 @@ function loadProxies(): string[] {
       .map(line => line.trim())
       .filter(line => line && !line.startsWith('#') && line !== '0.0.0.0:80' && !line.startsWith('127.0.0'));
   } catch (error) {
-    console.warn('⚠️ No se pudo cargar proxies, usando conexión directa');
+    console.warn('No se pudo cargar proxies, usando conexión directa');
     return [];
   }
 }
@@ -73,7 +73,7 @@ function parsePeruDate(fechaStr: string): string {
     const match = fechaStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s+(a\.m\.|p\.m\.)/i);
     
     if (!match) {
-      console.warn(`⚠️ Could not parse date: ${fechaStr}`);
+      console.warn(`Could not parse date: ${fechaStr}`);
       return new Date().toISOString();
     }
 
@@ -93,7 +93,7 @@ function parsePeruDate(fechaStr: string): string {
     
     return new Date(isoDateStr).toISOString();
   } catch (error) {
-    console.error(`❌ Error parsing date "${fechaStr}":`, error);
+    console.error(`Error parsing date "${fechaStr}":`, error);
     return new Date().toISOString();
   }
 }
@@ -142,7 +142,7 @@ async function parseBomberos24HorasReal(): Promise<BomberosEmergencia[]> {
           if (proxy) {
             proxyUrl = `http://${proxy}`;
             usedProxies.add(proxy);
-            console.log(`🔄 Intento ${attempt}/${MAX_RETRIES} usando proxy: ${proxy}`);
+            console.log(`Intento ${attempt}/${MAX_RETRIES} usando proxy: ${proxy}`);
           }
         }
       } else if (attempt === 1) {
@@ -152,7 +152,7 @@ async function parseBomberos24HorasReal(): Promise<BomberosEmergencia[]> {
       const response = await fetch('https://sgonorte.bomberosperu.gob.pe/24horas', fetchOptions);
 
       if (!response.ok) {
-        console.error(`❌ Intento ${attempt} falló: ${response.status}`);
+        console.error(`Intento ${attempt} falló: ${response.status}`);
         if (attempt < MAX_RETRIES) {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Backoff incremental
           continue;
@@ -206,13 +206,13 @@ async function parseBomberos24HorasReal(): Promise<BomberosEmergencia[]> {
 
               if (index < 3) {
                 console.log(
-                  `✅ Parsed: ${numparte} - ${tipo.substring(0, 30)}... at (${latitud}, ${longitud})`
+                  `Parsed: ${numparte} - ${tipo.substring(0, 30)}... at (${latitud}, ${longitud})`
                 );
               }
             }
           }
         } catch (rowError) {
-          console.error(`⚠️ Error parsing row ${index}:`, rowError);
+          console.error(`Error parsing row ${index}:`, rowError);
         }
       });
 
@@ -221,14 +221,14 @@ async function parseBomberos24HorasReal(): Promise<BomberosEmergencia[]> {
       if (emergencias.length > 0) {
         return emergencias;
       } else if (attempt < MAX_RETRIES) {
-        console.warn(`⚠️ No data found, retrying with different proxy...`);
+        console.warn(`No data found, retrying with different proxy...`);
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         continue;
       }
       
       throw new Error('No emergency data found after all retries');
     } catch (error) {
-      console.error(`❌ Error in attempt ${attempt}:`, error);
+      console.error(`Error in attempt ${attempt}:`, error);
       if (attempt === MAX_RETRIES) {
         throw error;
       }
@@ -249,7 +249,7 @@ export async function GET() {
     // Verificar si hay datos en caché y si aún son válidos (menos de 30 minutos)
     if (cachedEmergencias && (now - cachedEmergencias.timestamp) < CACHE_DURATION) {
       const cacheAge = Math.floor((now - cachedEmergencias.timestamp) / 1000 / 60);
-      console.log(`💾 Usando datos en caché (${cacheAge} minutos de antigüedad)`);
+      console.log(`Usando datos en caché (${cacheAge} minutos de antigüedad)`);
       
       return NextResponse.json({
         success: true,
@@ -262,7 +262,7 @@ export async function GET() {
     }
 
     // Caché expirado o no existe, obtener datos frescos
-    console.log('🔄 Caché expirado o vacío, obteniendo datos frescos...');
+    console.log('Caché expirado o vacío, obteniendo datos frescos...');
     const emergencias = await parseBomberos24HorasReal();
 
     // Si se obtuvieron datos reales, guardarlos en caché
@@ -272,7 +272,7 @@ export async function GET() {
         timestamp: now,
       };
       
-      console.log(`💾 Datos guardados en caché (válidos por 30 minutos)`);
+      console.log(`Datos guardados en caché (válidos por 30 minutos)`);
 
       return NextResponse.json({
         success: true,
@@ -286,7 +286,7 @@ export async function GET() {
     // Si no hay datos nuevos pero hay caché, mantener el caché viejo
     if (cachedEmergencias) {
       const cacheAge = Math.floor((now - cachedEmergencias.timestamp) / 1000 / 60);
-      console.log(`⚠️ No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
+      console.log(`No hay datos nuevos, manteniendo caché existente (${cacheAge} minutos)`);
       
       return NextResponse.json({
         success: true,
@@ -299,7 +299,7 @@ export async function GET() {
     }
 
     // No hay datos ni caché - retornar vacío
-    console.log('⚠️ No hay datos disponibles');
+    console.log('No hay datos disponibles');
     return NextResponse.json({
       success: false,
       count: 0,
@@ -308,12 +308,12 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Bomberos API error:', error);
+    console.error('Bomberos API error:', error);
     
     // Si hay caché disponible (aunque esté expirado), usarlo como fallback
     if (cachedEmergencias) {
       const cacheAge = Math.floor((Date.now() - cachedEmergencias.timestamp) / 1000 / 60);
-      console.log(`⚠️ Error al obtener datos, usando caché expirado (${cacheAge} minutos)`);
+      console.log(`Error al obtener datos, usando caché expirado (${cacheAge} minutos)`);
       
       return NextResponse.json({
         success: true,
@@ -327,7 +327,7 @@ export async function GET() {
     }
     
     // En caso de error sin caché, retornar vacío
-    console.error('❌ No hay datos ni caché disponible');
+    console.error('No hay datos ni caché disponible');
     return NextResponse.json(
       {
         success: false,
