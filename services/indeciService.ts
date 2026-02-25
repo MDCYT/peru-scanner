@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Emergencia } from '@/types';
+import { Emergencia, HeatmapPoint, CrimeType } from '@/types';
 
 // URL de la API de datos abiertos de Perú para INDECI
 const INDECI_API_BASE = 'http://www.datosabiertos.gob.pe/api/3/action';
@@ -235,4 +235,105 @@ export function getEmergencyStats(emergencias: Emergencia[]) {
   });
 
   return stats;
+}
+
+/**
+ * Obtiene datos del heatmap de crímenes
+ * 
+ * Parámetros opcionales:
+ * - limit: Máximo de registros (default: 5000, máximo: 20000)
+ * - offset: Desplazamiento para paginación
+ * - crime_type: Filtrar por tipo de delito
+ * - dept_code: Filtrar por departamento
+ * - min_lat, max_lat, min_lon, max_lon: Rango de coordenadas
+ */
+export async function getHeatmapData(options?: {
+  limit?: number;
+  offset?: number;
+  crime_type?: string;
+  dept_code?: string;
+  min_lat?: number;
+  max_lat?: number;
+  min_lon?: number;
+  max_lon?: number;
+}): Promise<HeatmapPoint[]> {
+  try {
+    const params = new URLSearchParams();
+    
+    if (options?.limit) {
+      const limit = Math.min(Math.max(options.limit, 1), 20000);
+      params.append('limit', limit.toString());
+    }
+    if (options?.offset !== undefined) params.append('offset', options.offset.toString());
+    if (options?.crime_type) params.append('crime_type', options.crime_type);
+    if (options?.dept_code) params.append('dept_code', options.dept_code);
+    if (options?.min_lat !== undefined) params.append('min_lat', options.min_lat.toString());
+    if (options?.max_lat !== undefined) params.append('max_lat', options.max_lat.toString());
+    if (options?.min_lon !== undefined) params.append('min_lon', options.min_lon.toString());
+    if (options?.max_lon !== undefined) params.append('max_lon', options.max_lon.toString());
+
+    const queryString = params.toString();
+    const url = `https://api.mdcdev.me/v2/peru/inei/criminals/heatmap${queryString ? '?' + queryString : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error(`Heatmap API error: ${response.status}`);
+      return [];
+    }
+
+    const apiResponse = await response.json();
+
+    if (!apiResponse.success || !apiResponse.data) {
+      console.log('No hay datos de heatmap disponibles');
+      return [];
+    }
+
+    console.log(`Retrieved ${apiResponse.data.length} heatmap points`);
+
+    return apiResponse.data;
+  } catch (error) {
+    console.error('Error al obtener datos del heatmap:', error);
+    return [];
+  }
+}
+
+/**
+ * Obtiene los tipos de crímenes disponibles con sus conteos
+ */
+export async function getCrimeTypes(): Promise<CrimeType[]> {
+  try {
+    const response = await fetch('https://api.mdcdev.me/v2/peru/inei/criminals/types', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error(`Crime Types API error: ${response.status}`);
+      return [];
+    }
+
+    const apiResponse = await response.json();
+
+    if (!apiResponse.success || !apiResponse.data) {
+      console.log('No hay tipos de crímenes disponibles');
+      return [];
+    }
+
+    console.log(`Retrieved ${apiResponse.data.length} crime types`);
+
+    return apiResponse.data;
+  } catch (error) {
+    console.error('Error al obtener tipos de crímenes:', error);
+    return [];
+  }
 }

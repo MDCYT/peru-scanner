@@ -1,17 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Camera, Emergencia } from '@/types';
-import { AlertTriangle, Video, Activity, X, ChevronDown, Filter } from 'lucide-react';
+import { Camera, Emergencia, HeatmapPoint, CrimeType } from '@/types';
+import { AlertTriangle, Video, Activity, X, ChevronDown, Filter, Flame } from 'lucide-react';
 
 interface DashboardProps {
   cameras: Camera[];
   emergencias: Emergencia[];
   showCameras: boolean;
   showEmergencies: boolean;
+  showCriminalResidences: boolean;
+  criminalResidencesData: HeatmapPoint[];
+  crimeTypes: CrimeType[];
   onToggleCameras: () => void;
   onToggleEmergencies: () => void;
+  onToggleCriminalResidences: () => void;
   onEmergencyFilterChange?: (filter: Set<string> | undefined) => void;
+  onCriminalResidencesFilterChange?: (filters: {
+    crimeType?: string;
+    deptCode?: string;
+  }) => void;
 }
 
 export default function Dashboard({
@@ -19,9 +27,14 @@ export default function Dashboard({
   emergencias,
   showCameras,
   showEmergencies,
+  showCriminalResidences,
+  criminalResidencesData,
+  crimeTypes,
   onToggleCameras,
   onToggleEmergencies,
+  onToggleCriminalResidences,
   onEmergencyFilterChange,
+  onCriminalResidencesFilterChange,
 }: DashboardProps) {
   // Estado para filtro de emergencias - todos seleccionados por defecto
   const tiposEmergencias = Array.from(
@@ -40,6 +53,11 @@ export default function Dashboard({
     new Set(tiposEmergencias) // Todos seleccionados por defecto
   );
   const [showEmergencyFilters, setShowEmergencyFilters] = useState(false);
+  const [criminalResidencesFilter, setCriminalResidencesFilter] = useState<{
+    crimeType?: string;
+    deptCode?: string;
+  }>({});
+  const [showCriminalFilters, setShowCriminalFilters] = useState(false);
 
   // Estadísticas de cámaras
   const camarasOperativas = cameras.filter((c) => c.estado === 'Operativo').length;
@@ -74,6 +92,12 @@ export default function Dashboard({
     const newFilter = new Set<string>();
     setEmergencyFilter(newFilter);
     onEmergencyFilterChange?.(newFilter);
+  };
+
+  // Manejar cambio de filtros de residencias criminales
+  const handleCriminalFiltersChange = (newFilters: { crimeType?: string; deptCode?: string }) => {
+    setCriminalResidencesFilter(newFilters);
+    onCriminalResidencesFilterChange?.(newFilters);
   };
 
   // Sincronizar el filtro inicial con el padre
@@ -169,6 +193,111 @@ export default function Dashboard({
                       </label>
                     );
                   })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Última Residencia de Privados de Libertad */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-3 cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  checked={showCriminalResidences}
+                  onChange={onToggleCriminalResidences}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                />
+                <span className="text-gray-700 flex items-center">
+                  <Flame className="w-5 h-5 mr-2 text-purple-600" />
+                  Última Residencia de Privados de Libertad
+                </span>
+              </label>
+              
+              {/* Botón de filtros */}
+              <button
+                onClick={() => setShowCriminalFilters(!showCriminalFilters)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Filtrar residencias"
+                disabled={!showCriminalResidences}
+              >
+                <Filter className={`w-5 h-5 ${Object.keys(criminalResidencesFilter).length > 0 ? 'text-purple-600' : 'text-gray-400'}`} />
+              </button>
+            </div>
+
+            {/* Panel de filtros de residencias */}
+            {showCriminalFilters && showCriminalResidences && (
+              <div className="ml-8 bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-600">
+                    Filtros activos: {Object.keys(criminalResidencesFilter).length}
+                  </span>
+                  {Object.keys(criminalResidencesFilter).length > 0 && (
+                    <button
+                      onClick={() => {
+                        setCriminalResidencesFilter({});
+                        onCriminalResidencesFilterChange?.({});
+                      }}
+                      className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {/* Filtro por tipo de crimen */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                      Tipo de Crimen
+                    </label>
+                    <select
+                      value={criminalResidencesFilter.crimeType || ''}
+                      onChange={(e) =>
+                        handleCriminalFiltersChange({
+                          ...criminalResidencesFilter,
+                          crimeType: e.target.value || undefined,
+                        })
+                      }
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Todos los tipos</option>
+                      {crimeTypes.map((crime) => (
+                        <option key={crime.crime_type} value={crime.crime_type}>
+                          {crime.crime_type} ({crime.count})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filtro por departamento */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                      Departamento
+                    </label>
+                    <select
+                      value={criminalResidencesFilter.deptCode || ''}
+                      onChange={(e) =>
+                        handleCriminalFiltersChange({
+                          ...criminalResidencesFilter,
+                          deptCode: e.target.value || undefined,
+                        })
+                      }
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Todos los departamentos</option>
+                      <option value="15">Lima</option>
+                      <option value="07">Callao</option>
+                      <option value="05">Ayacucho</option>
+                      <option value="25">Ucayali</option>
+                      <option value="14">Lambayeque</option>
+                      <option value="02">Ancash</option>
+                      <option value="13">La Libertad</option>
+                      <option value="10">Huanuco</option>
+                      <option value="11">Ica</option>
+                      <option value="20">Piura</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}

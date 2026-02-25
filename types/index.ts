@@ -67,3 +67,17 @@ export interface EmergencyStats {
   porDepartamento: Record<string, number>;
   porMes: Record<string, number>;
 }
+
+// Tipo para datos del Heatmap de Crímenes
+export interface HeatmapPoint {
+  lat: string;
+  lon: string;
+  type: string;
+  intensity: number;
+}
+
+// Tipo para tipos de crímenes disponibles
+export interface CrimeType {
+  crime_type: string;
+  count: number;
+}

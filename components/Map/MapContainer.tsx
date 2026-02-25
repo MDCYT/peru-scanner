@@ -1,11 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect, useState, useRef } from 'react';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Camera, Emergencia } from '@/types';
+import { Camera, Emergencia, HeatmapPoint } from '@/types';
+import { getHeatmapData } from '@/services/indeciService';
 
 // Fix para los iconos de Leaflet en Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -20,6 +19,12 @@ interface MapComponentProps {
   emergencias: Emergencia[];
   showCameras: boolean;
   showEmergencies: boolean;
+  showCriminalResidences: boolean;
+  criminalResidencesData: HeatmapPoint[];
+  criminalResidencesFilter?: {
+    crimeType?: string;
+    deptCode?: string;
+  };
   emergencyFilter?: Set<string>; // Tipos de emergencias a mostrar
   onCameraClick?: (camera: Camera) => void;
   onEmergencyClick?: (emergencia: Emergencia) => void;
@@ -33,6 +38,250 @@ const cameraIcon = new L.Icon({
   popupAnchor: [0, -36],
   className: 'camera-marker-icon',
 });
+
+/**
+ * Obtiene el color para un punto del heatmap basado en su intensidad
+ */
+function getHeatmapColor(intensity: number): string {
+  // intensity va de 1 a ~10, normalizamos a 0-1
+  const normalized = Math.min(intensity / 10, 1);
+  
+  // Gradiente: azul -> verde -> amarillo -> rojo
+  if (normalized < 0.25) {
+    // Azul a verde
+    const t = normalized / 0.25;
+    return `rgb(0, ${Math.round(165 * t)}, 255)`;
+  } else if (normalized < 0.5) {
+    // Verde a amarillo
+    const t = (normalized - 0.25) / 0.25;
+    return `rgb(${Math.round(255 * t)}, 165, 0)`;
+  } else if (normalized < 0.75) {
+    // Amarillo a naranja
+    const t = (normalized - 0.5) / 0.25;
+    return `rgb(255, ${Math.round(165 * (1 - t))}, 0)`;
+  } else {
+    // Naranja a rojo
+    return `rgb(255, ${Math.round(69 * (1 - (normalized - 0.75) / 0.25))}, 0)`;
+  }
+}
+
+/**
+ * Obtiene el tamaño del círculo basado en la intensidad
+ */
+function getHeatmapRadius(intensity: number): number {
+  return Math.min(5 + intensity * 1.5, 25);
+}
+
+// Icono para puntos de residencias criminales (púrpura con símbolo especial)
+const criminalResidenceIcon = new L.Icon({
+  iconUrl: `data:image/svg+xml;base64,${Buffer.from(
+    `<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.5"/>
+        </filter>
+      </defs>
+      <circle cx="20" cy="20" r="16" fill="#9333EA" filter="url(#shadow)"/>
+      <circle cx="20" cy="20" r="14" fill="#9333EA" opacity="0.9"/>
+      <!-- Casa/Marcador de residencia -->
+      <path d="M13 22 L13 28 L27 28 L27 22 M20 16 L13 22 L27 22 M20 16 L28 24" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      <rect x="15" y="23" width="3" height="3" fill="#9333EA"/>
+      <rect x="22" y="23" width="3" height="3" fill="#9333EA"/>
+    </svg>`
+  ).toString('base64')}`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -36],
+  className: 'criminal-residence-marker-icon',
+});
+
+/**
+ * Componente internal que maneja la carga dinámica de residencias criminales
+ */
+function CriminalResidencesLayer({
+  showCriminalResidences,
+  criminalResidencesFilter,
+}: {
+  showCriminalResidences: boolean;
+  criminalResidencesFilter?: {
+    crimeType?: string;
+    deptCode?: string;
+  };
+}) {
+  const map = useMap();
+  const [dynamicCriminalData, setDynamicCriminalData] = useState<HeatmapPoint[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const lastBoundsRef = useRef<string>('');
+  const requestIdRef = useRef(0);
+  const filterKey = `${criminalResidencesFilter?.crimeType ?? ''}|${criminalResidencesFilter?.deptCode ?? ''}`;
+
+  const getBoundsKey = (bounds: L.LatLngBounds) =>
+    `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}|${filterKey}`;
+
+  // Manejar eventos del mapa
+  useMapEvents({
+    moveend() {
+      if (!showCriminalResidences) return;
+
+      const bounds = map.getBounds();
+      const boundsKey = getBoundsKey(bounds);
+
+      // Evitar llamadas repetidas con los mismos bounds
+      if (boundsKey === lastBoundsRef.current) {
+        return;
+      }
+
+      lastBoundsRef.current = boundsKey;
+
+      // Cargar datos según los bounds visibles
+      loadCriminalDataForBounds(bounds);
+    },
+    zoomend() {
+      if (!showCriminalResidences) return;
+
+      const bounds = map.getBounds();
+      const boundsKey = getBoundsKey(bounds);
+
+      if (boundsKey === lastBoundsRef.current) {
+        return;
+      }
+
+      lastBoundsRef.current = boundsKey;
+      loadCriminalDataForBounds(bounds);
+    },
+  });
+
+  async function loadCriminalDataForBounds(bounds: L.LatLngBounds) {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    try {
+      setIsLoading(true);
+      setDynamicCriminalData([]);
+
+      const { _southWest, _northEast } = bounds as any;
+      const min_lat = _southWest.lat;
+      const max_lat = _northEast.lat;
+      const min_lon = _southWest.lng;
+      const max_lon = _northEast.lng;
+      const zoom = map.getZoom();
+      const limit = zoom <= 9 ? 20000 : 10000;
+      const chunkSize = 1000;
+      let offset = 0;
+
+      while (offset < limit) {
+        if (requestIdRef.current !== requestId) return;
+
+        const pageLimit = Math.min(chunkSize, limit - offset);
+        const data = await getHeatmapData({
+          limit: pageLimit,
+          offset,
+          crime_type: criminalResidencesFilter?.crimeType,
+          dept_code: criminalResidencesFilter?.deptCode,
+          min_lat,
+          max_lat,
+          min_lon,
+          max_lon,
+        });
+
+        if (requestIdRef.current !== requestId) return;
+
+        if (!data || data.length === 0) break;
+
+        setDynamicCriminalData((prev) => [...prev, ...data]);
+
+        if (data.length < pageLimit) break;
+
+        offset += pageLimit;
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } catch (error) {
+      console.error('Error cargando datos dinámicos de residencias criminales:', error);
+    } finally {
+      if (requestIdRef.current === requestId) {
+        setIsLoading(false);
+      }
+    }
+  }
+
+  // Cargar datos iniciales cuando se activa
+  useEffect(() => {
+    if (showCriminalResidences && dynamicCriminalData.length === 0) {
+      const bounds = map.getBounds();
+      loadCriminalDataForBounds(bounds);
+    }
+  }, [showCriminalResidences]);
+
+  // Recargar cuando cambia el filtro
+  useEffect(() => {
+    if (showCriminalResidences) {
+      const bounds = map.getBounds();
+      lastBoundsRef.current = '';
+      loadCriminalDataForBounds(bounds);
+    }
+  }, [criminalResidencesFilter]);
+
+  if (!showCriminalResidences) {
+    return null;
+  }
+
+  return (
+    <MarkerClusterGroup
+      chunkedLoading
+      maxClusterRadius={40}
+      spiderfyOnMaxZoom={true}
+      showCoverageOnHover={true}
+      zoomToBoundsOnClick={true}
+      iconCreateFunction={(cluster: any) => {
+        const count = cluster.getChildCount();
+        let size = 'small';
+        if (count >= 50) size = 'large';
+        else if (count >= 20) size = 'medium';
+
+        return L.divIcon({
+          html: `<div><span>${count}</span></div>`,
+          className: `marker-cluster marker-cluster-${size} criminal-cluster`,
+          iconSize: L.point(40, 40),
+        });
+      }}
+    >
+      {dynamicCriminalData
+        .filter((point) => {
+          // Aplicar filtro por tipo de crimen si está seleccionado
+          if (criminalResidencesFilter?.crimeType) {
+            return point.type
+              .toLowerCase()
+              .includes(criminalResidencesFilter.crimeType.toLowerCase());
+          }
+          return true;
+        })
+        .map((point, index) => {
+          const lat = parseFloat(point.lat);
+          const lon = parseFloat(point.lon);
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            return null;
+          }
+
+          return (
+            <Marker key={`criminal-residence-${index}-${point.lat}-${point.lon}`} position={[lat, lon]} icon={criminalResidenceIcon}>
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-bold text-purple-700 mb-2">Residencia Criminal</h3>
+                  <p className="text-sm mb-1">
+                    <span className="font-semibold">Tipo de Crimen:</span> {point.type}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-semibold">Coordenadas:</span> {lat.toFixed(6)}, {lon.toFixed(6)}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+    </MarkerClusterGroup>
+  );
+}
 
 // Mapa de colores por categoría de emergencia
 const emergencyColorMap: { [key: string]: string } = {
@@ -235,6 +484,9 @@ export default function MapComponent({
   emergencias,
   showCameras,
   showEmergencies,
+  showCriminalResidences,
+  criminalResidencesData,
+  criminalResidencesFilter,
   emergencyFilter,
   onCameraClick,
   onEmergencyClick,
@@ -282,6 +534,12 @@ export default function MapComponent({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url={isDarkMode ? darkTileUrl : lightTileUrl}
+        />
+
+        {/* Componente de carga dinámica de residencias criminales */}
+        <CriminalResidencesLayer
+          showCriminalResidences={showCriminalResidences}
+          criminalResidencesFilter={criminalResidencesFilter}
         />
 
         {/* Marcadores de cámaras (sin clustering) */}
@@ -411,7 +669,7 @@ export default function MapComponent({
         )}
       </LeafletMap>
 
-      {/* Estilos personalizados para clusters de emergencias */}
+      {/* Estilos personalizados para clusters de emergencias y residencias criminales */}
       <style jsx global>{`
         .emergency-cluster {
           background-color: rgba(255, 0, 0, 0.6);
@@ -446,6 +704,42 @@ export default function MapComponent({
         
         .marker-cluster-large.emergency-cluster {
           background-color: rgba(200, 0, 0, 0.8);
+        }
+
+        /* Estilos para clusters de residencias criminales */
+        .criminal-cluster {
+          background-color: rgba(147, 51, 234, 0.6);
+          border-radius: 50%;
+          text-align: center;
+          color: white;
+          font-weight: bold;
+          border: 3px solid rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+        }
+        
+        .criminal-cluster div {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+        }
+        
+        .criminal-cluster span {
+          line-height: 1;
+        }
+        
+        .marker-cluster-small.criminal-cluster {
+          background-color: rgba(167, 107, 207, 0.6);
+        }
+        
+        .marker-cluster-medium.criminal-cluster {
+          background-color: rgba(147, 51, 234, 0.7);
+        }
+        
+        .marker-cluster-large.criminal-cluster {
+          background-color: rgba(120, 40, 180, 0.8);
         }
       `}</style>
     </div>

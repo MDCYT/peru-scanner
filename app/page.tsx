@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Camera, Emergencia } from '@/types';
+import { Camera, Emergencia, HeatmapPoint, CrimeType } from '@/types';
 import { getCameras } from '@/services/camerasService';
-import { getEmergencias } from '@/services/indeciService';
+import { getEmergencias, getHeatmapData, getCrimeTypes } from '@/services/indeciService';
 import Dashboard from '@/components/Dashboard/Dashboard';
 import CameraViewer from '@/components/CameraViewer/CameraViewer';
 
@@ -23,10 +23,17 @@ export default function HomePage() {
   const router = useRouter();
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [emergencias, setEmergencias] = useState<Emergencia[]>([]);
+  const [criminalResidencesData, setCriminalResidencesData] = useState<HeatmapPoint[]>([]);
+  const [crimeTypes, setCrimeTypes] = useState<CrimeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCameras, setShowCameras] = useState(true);
   const [showEmergencies, setShowEmergencies] = useState(true);
+  const [showCriminalResidences, setShowCriminalResidences] = useState(false); // Desactivado por defecto
   const [emergencyFilter, setEmergencyFilter] = useState<Set<string> | undefined>(undefined); // undefined = mostrar todo
+  const [criminalResidencesFilter, setCriminalResidencesFilter] = useState<{
+    crimeType?: string;
+    deptCode?: string;
+  }>({});
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showInfoBanner, setShowInfoBanner] = useState(true);
@@ -85,12 +92,16 @@ export default function HomePage() {
     async function loadData() {
       try {
         setLoading(true);
-        const [camerasData, emergenciasData] = await Promise.all([
+        const [camerasData, emergenciasData, crimeTypesData] = await Promise.all([
           getCameras(),
           getEmergencias(),
+          getCrimeTypes(),
+          // Se eliminó getHeatmapData aquí - se carga dinámicamente en el mapa
         ]);
         setCameras(camerasData);
         setEmergencias(emergenciasData);
+        setCriminalResidencesData([]); // Iniciar vacío, se cargará dinámicamente
+        setCrimeTypes(crimeTypesData);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       } finally {
@@ -107,6 +118,10 @@ export default function HomePage() {
 
   const handleToggleEmergencies = () => {
     setShowEmergencies(!showEmergencies);
+  };
+
+  const handleToggleCriminalResidences = () => {
+    setShowCriminalResidences(!showCriminalResidences);
   };
 
   const handleCameraClick = (camera: Camera) => {
@@ -163,9 +178,14 @@ export default function HomePage() {
                 emergencias={emergencias}
                 showCameras={showCameras}
                 showEmergencies={showEmergencies}
+                showCriminalResidences={showCriminalResidences}
+                criminalResidencesData={criminalResidencesData}
+                crimeTypes={crimeTypes}
                 onToggleCameras={handleToggleCameras}
                 onToggleEmergencies={handleToggleEmergencies}
+                onToggleCriminalResidences={handleToggleCriminalResidences}
                 onEmergencyFilterChange={setEmergencyFilter}
+                onCriminalResidencesFilterChange={setCriminalResidencesFilter}
               />
             )}
           </div>
@@ -186,6 +206,9 @@ export default function HomePage() {
               emergencias={emergencias}
               showCameras={showCameras}
               showEmergencies={showEmergencies}
+              showCriminalResidences={showCriminalResidences}
+              criminalResidencesData={criminalResidencesData}
+              criminalResidencesFilter={criminalResidencesFilter}
               emergencyFilter={emergencyFilter}
               onCameraClick={handleCameraClick}
             />
@@ -228,6 +251,14 @@ export default function HomePage() {
                     <span className="text-gray-700">Mat. peligrosos</span>
                   </div>
                 </>
+              )}
+              {showCriminalResidences && (
+                <div className="border-t border-gray-200 pt-1.5 sm:pt-2 mt-1.5 sm:mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex-shrink-0" style={{backgroundColor: '#9333EA'}}></div>
+                    <span className="text-gray-700">Última Residencia</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
