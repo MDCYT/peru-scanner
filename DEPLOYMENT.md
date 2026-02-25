@@ -2,24 +2,39 @@
 
 ## Vercel
 
+### Arquitectura
+
+La aplicación consume directamente las APIs externas desde el frontend:
+- Bomberos: `https://api.mdcdev.me/v2/peru/bomberos/incidentes`
+- INDECI: `https://api.mdcdev.me/v2/peru/indeci/incidentes`
+- Cámaras: `https://api.mdcdev.me/v2/peru/cameras`
+
+No se requieren rutas API intermedias ni configuración especial.
+
 ### Variables de Entorno
 
-No es necesario configurar variables de entorno adicionales en Vercel. El sistema detectará automáticamente la URL de producción usando `VERCEL_URL`.
+No se requieren variables de entorno para el funcionamiento básico. 
+
+Opcionales:
+- `NEXT_PUBLIC_MUNLIMA_API_KEY`: API key de la Municipalidad de Lima (no requerido actualmente)
 
 ### Troubleshooting
 
 Si las emergencias no cargan en producción:
 
-1. Verifica que las APIs externas estén accesibles:
+1. Verifica que las APIs externas estén accesibles desde el navegador:
    - https://api.mdcdev.me/v2/peru/bomberos/incidentes
    - https://api.mdcdev.me/v2/peru/indeci/incidentes
    - https://api.mdcdev.me/v2/peru/cameras
 
-2. Revisa los logs de Vercel para ver errores específicos
+2. Revisa la consola del navegador para errores CORS o de red
 
-3. Si necesitas forzar una URL específica, configura en Vercel:
-   ```
-   NEXT_PUBLIC_BASE_URL=https://tu-dominio.vercel.app
+3. Verifica que las APIs respondan con el formato esperado:
+   ```json
+   {
+     "success": true,
+     "data": [...]
+   }
    ```
 
 ### Deployment
@@ -32,9 +47,14 @@ npm run build
 vercel --prod
 ```
 
-## Variables de Entorno Disponibles
+## Desarrollo Local
 
-- `NEXT_PUBLIC_BASE_URL` (opcional): URL base de la aplicación. Si no se configura, se usa:
-  - `window.location.origin` en el cliente
-  - `VERCEL_URL` en producción (Vercel)
-  - `http://localhost:3000` en desarrollo local
+```bash
+# Instalar dependencias
+npm install
+
+# Ejecutar en modo desarrollo
+npm run dev
+```
+
+La aplicación estará disponible en `http://localhost:3000`

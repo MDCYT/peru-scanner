@@ -38,19 +38,17 @@ export async function getEmergencias(): Promise<Emergencia[]> {
  */
 export async function getBomberos24Horas(): Promise<Emergencia[]> {
   try {
-    // Usar URL absoluta en producción, relativa en desarrollo
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/bomberos-24horas`, {
+    const response = await fetch('https://api.mdcdev.me/v2/peru/bomberos/incidentes', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
       cache: 'no-store',
     });
     
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      console.error(`Bomberos API error: ${response.status}`);
+      return [];
     }
 
     const apiResponse = await response.json();
@@ -105,19 +103,17 @@ export async function getBomberos24Horas(): Promise<Emergencia[]> {
  */
 export async function getIndeci24Horas(): Promise<Emergencia[]> {
   try {
-    // Usar URL absoluta en producción, relativa en desarrollo
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/indeci-emergencias`, {
+    const response = await fetch('https://api.mdcdev.me/v2/peru/indeci/incidentes', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
       cache: 'no-store',
     });
     
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      console.error(`INDECI API error: ${response.status}`);
+      return [];
     }
 
     const apiResponse = await response.json();
