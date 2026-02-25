@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Camera, Emergencia } from '@/types';
@@ -239,6 +240,7 @@ export default function MapComponent({
   onEmergencyClick,
 }: MapComponentProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Lima coordinates (centro aproximado)
   const center: [number, number] = [-12.0464, -77.0428];
@@ -256,122 +258,196 @@ export default function MapComponent({
     );
   }
 
+  const lightTileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTileUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
   return (
-    <LeafletMap
-      center={center}
-      zoom={zoom}
-      style={{ height: '100%', width: '100%' }}
-      scrollWheelZoom={true}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="relative w-full h-full">
+      {/* Botón de cambio de tema */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className="absolute top-4 right-4 z-[1000] bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-lg transition-colors flex items-center gap-2"
+        title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      >
+        {isDarkMode ? '☀️' : '🌙'}
+        <span className="hidden sm:inline">{isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
+      </button>
 
-      {/* Marcadores de cámaras */}
-      {showCameras &&
-        cameras.map((camera) => (
-          <Marker
-            key={camera.id}
-            position={[camera.latitud, camera.longitud]}
-            icon={cameraIcon}
-            eventHandlers={{
-              click: () => onCameraClick?.(camera),
-            }}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-bold text-blue-700 mb-2">{camera.nombre}</h3>
-                <p className="text-sm mb-1">
-                  <span className="font-semibold">Ubicación:</span> {camera.ubicacion}
-                </p>
-                {camera.direccion && (
-                  <p className="text-sm mb-1">
-                    <span className="font-semibold">Dirección:</span> {camera.direccion}
-                  </p>
-                )}
-                <p className="text-sm mb-1">
-                  <span className="font-semibold">Tipo:</span> {camera.tipo}
-                </p>
-                <p className="text-sm">
-                  <span className="font-semibold">Estado:</span>{' '}
-                  <span
-                    className={
-                      camera.estado === 'Operativo'
-                        ? 'text-green-600'
-                        : camera.estado === 'No Operativo'
-                        ? 'text-red-600'
-                        : 'text-yellow-600'
-                    }
-                  >
-                    {camera.estado}
-                  </span>
-                </p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+      <LeafletMap
+        center={center}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url={isDarkMode ? darkTileUrl : lightTileUrl}
+        />
 
-      {/* Marcadores de emergencias */}
-      {showEmergencies &&
-        emergencias
-          .filter((e) => e.coordenadas && (!emergencyFilter || emergencyFilter.has(e.tipoEmergencia)))
-          .map((emergencia) => (
+        {/* Marcadores de cámaras (sin clustering) */}
+        {showCameras &&
+          cameras.map((camera) => (
             <Marker
-              key={emergencia.id}
-              position={[emergencia.coordenadas!.latitud, emergencia.coordenadas!.longitud]}
-              icon={getEmergencyIcon(emergencia.tipoEmergencia)}
+              key={camera.id}
+              position={[camera.latitud, camera.longitud]}
+              icon={cameraIcon}
               eventHandlers={{
-                click: () => onEmergencyClick?.(emergencia),
+                click: () => onCameraClick?.(camera),
               }}
             >
               <Popup>
                 <div className="p-2">
-                  <h3 className="font-bold text-red-700 mb-2">{emergencia.tipoEmergencia}</h3>
+                  <h3 className="font-bold text-blue-700 mb-2">{camera.nombre}</h3>
                   <p className="text-sm mb-1">
-                    <span className="font-semibold">Fenómeno:</span> {emergencia.fenomeno}
+                    <span className="font-semibold">Ubicación:</span> {camera.ubicacion}
                   </p>
-                  <p className="text-sm mb-1">
-                    <span className="font-semibold">Fecha:</span>{' '}
-                    {new Date(emergencia.fecha).toLocaleDateString('es-PE')} {new Date(emergencia.fecha).toLocaleTimeString('es-PE')}
-                  </p>
-                  <p className="text-sm mb-1">
-                    <span className="font-semibold">Ubicación:</span> {emergencia.ubicacion.distrito},{' '}
-                    {emergencia.ubicacion.provincia}
-                  </p>
-                  {emergencia.descripcion && (
+                  {camera.direccion && (
                     <p className="text-sm mb-1">
-                      <span className="font-semibold">Descripción:</span> {emergencia.descripcion}
+                      <span className="font-semibold">Dirección:</span> {camera.direccion}
                     </p>
                   )}
-                  {emergencia.afectados && (
-                    <div className="text-sm mt-2 border-t pt-2">
-                      <p className="font-semibold">Afectados:</p>
-                      {emergencia.afectados.fallecidos && (
-                        <p>Fallecidos: {emergencia.afectados.fallecidos}</p>
-                      )}
-                      {emergencia.afectados.heridos && <p>Heridos: {emergencia.afectados.heridos}</p>}
-                      {emergencia.afectados.damnificados && (
-                        <p>Damnificados: {emergencia.afectados.damnificados}</p>
-                      )}
-                    </div>
-                  )}
-                  {emergencia.codigoSinpad && !emergencia.codigoSinpad.startsWith('INDECI-') && (
-                    <a
-                      href={`https://sgonorte.bomberosperu.gob.pe/24horas/Home/Map?numparte=${emergencia.codigoSinpad}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className=""
+                  <p className="text-sm mb-1">
+                    <span className="font-semibold">Tipo:</span> {camera.tipo}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-semibold">Estado:</span>{' '}
+                    <span
+                      className={
+                        camera.estado === 'Operativo'
+                          ? 'text-green-600'
+                          : camera.estado === 'No Operativo'
+                          ? 'text-red-600'
+                          : 'text-yellow-600'
+                      }
                     >
-                      <p className='block mt-3 text-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm'>
-                        🚒 Ver en Bomberos Perú
-                      </p>
-                    </a>
-                  )}
+                      {camera.estado}
+                    </span>
+                  </p>
                 </div>
               </Popup>
             </Marker>
           ))}
-    </LeafletMap>
+
+        {/* Marcadores de emergencias con clustering */}
+        {showEmergencies && (
+          <MarkerClusterGroup
+            chunkedLoading
+            maxClusterRadius={30}
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={true}
+            zoomToBoundsOnClick={true}
+            iconCreateFunction={(cluster: any) => {
+              const count = cluster.getChildCount();
+              let size = 'small';
+              if (count >= 10) size = 'large';
+              else if (count >= 5) size = 'medium';
+              
+              return L.divIcon({
+                html: `<div><span>${count}</span></div>`,
+                className: `marker-cluster marker-cluster-${size} emergency-cluster`,
+                iconSize: L.point(40, 40),
+              });
+            }}
+          >
+            {emergencias
+              .filter((e) => e.coordenadas && (!emergencyFilter || emergencyFilter.has(e.tipoEmergencia)))
+              .map((emergencia) => (
+                <Marker
+                  key={emergencia.id}
+                  position={[emergencia.coordenadas!.latitud, emergencia.coordenadas!.longitud]}
+                  icon={getEmergencyIcon(emergencia.tipoEmergencia)}
+                  eventHandlers={{
+                    click: () => onEmergencyClick?.(emergencia),
+                  }}
+                >
+                  <Popup>
+                    <div className="p-2">
+                      <h3 className="font-bold text-red-700 mb-2">{emergencia.tipoEmergencia}</h3>
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">Fenómeno:</span> {emergencia.fenomeno}
+                      </p>
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">Fecha:</span>{' '}
+                        {new Date(emergencia.fecha).toLocaleDateString('es-PE')} {new Date(emergencia.fecha).toLocaleTimeString('es-PE')}
+                      </p>
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">Ubicación:</span> {emergencia.ubicacion.distrito},{' '}
+                        {emergencia.ubicacion.provincia}
+                      </p>
+                      {emergencia.descripcion && (
+                        <p className="text-sm mb-1">
+                          <span className="font-semibold">Descripción:</span> {emergencia.descripcion}
+                        </p>
+                      )}
+                      {emergencia.afectados && (
+                        <div className="text-sm mt-2 border-t pt-2">
+                          <p className="font-semibold">Afectados:</p>
+                          {emergencia.afectados.fallecidos && (
+                            <p>Fallecidos: {emergencia.afectados.fallecidos}</p>
+                          )}
+                          {emergencia.afectados.heridos && <p>Heridos: {emergencia.afectados.heridos}</p>}
+                          {emergencia.afectados.damnificados && (
+                            <p>Damnificados: {emergencia.afectados.damnificados}</p>
+                          )}
+                        </div>
+                      )}
+                      {emergencia.codigoSinpad && !emergencia.codigoSinpad.startsWith('INDECI-') && (
+                        <a
+                          href={`https://sgonorte.bomberosperu.gob.pe/24horas/Home/Map?numparte=${emergencia.codigoSinpad}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className=""
+                        >
+                          <p className='block mt-3 text-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm'>
+                            🚒 Ver en Bomberos Perú
+                          </p>
+                        </a>
+                      )}
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+          </MarkerClusterGroup>
+        )}
+      </LeafletMap>
+
+      {/* Estilos personalizados para clusters de emergencias */}
+      <style jsx global>{`
+        .emergency-cluster {
+          background-color: rgba(255, 0, 0, 0.6);
+          border-radius: 50%;
+          text-align: center;
+          color: white;
+          font-weight: bold;
+          border: 3px solid rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        .emergency-cluster div {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+        }
+        
+        .emergency-cluster span {
+          line-height: 1;
+        }
+        
+        .marker-cluster-small.emergency-cluster {
+          background-color: rgba(255, 107, 107, 0.6);
+        }
+        
+        .marker-cluster-medium.emergency-cluster {
+          background-color: rgba(255, 50, 50, 0.7);
+        }
+        
+        .marker-cluster-large.emergency-cluster {
+          background-color: rgba(200, 0, 0, 0.8);
+        }
+      `}</style>
+    </div>
   );
 }

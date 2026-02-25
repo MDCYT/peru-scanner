@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Camera, Emergencia } from '@/types';
@@ -158,6 +159,7 @@ export default function HackerMapContainer({
   onEmergencyClick,
 }: MapComponentProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true); // En modo hacker empieza en modo oscuro
   const center: [number, number] = [-12.0464, -77.0428];
   const zoom = 11;
 
@@ -173,6 +175,9 @@ export default function HackerMapContainer({
     );
   }
 
+  const lightTileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTileUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
   return (
     <div className="relative w-full h-full">
       <style jsx global>{`
@@ -182,7 +187,7 @@ export default function HackerMapContainer({
         }
         
         .hacker-map .leaflet-tile {
-          filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.2);
+          filter: ${isDarkMode ? 'invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.2)' : 'none'};
         }
         
         .hacker-map .leaflet-popup-content-wrapper {
@@ -243,7 +248,60 @@ export default function HackerMapContainer({
         .hacker-map .leaflet-control-attribution a {
           color: #00ff41 !important;
         }
+
+        /* Estilos para clusters en modo hacker */
+        .hacker-emergency-cluster {
+          background-color: rgba(0, 255, 65, 0.3);
+          border-radius: 50%;
+          text-align: center;
+          color: #00ff41;
+          font-weight: bold;
+          font-family: 'Courier New', monospace;
+          border: 3px solid #00ff41;
+          box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+        
+        .hacker-emergency-cluster div {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+        }
+        
+        .hacker-emergency-cluster span {
+          line-height: 1;
+          text-shadow: 0 0 10px rgba(0, 255, 65, 1);
+        }
+        
+        .marker-cluster-small.hacker-emergency-cluster {
+          background-color: rgba(0, 255, 65, 0.4);
+          border-width: 2px;
+        }
+        
+        .marker-cluster-medium.hacker-emergency-cluster {
+          background-color: rgba(0, 255, 65, 0.5);
+          border-width: 3px;
+        }
+        
+        .marker-cluster-large.hacker-emergency-cluster {
+          background-color: rgba(0, 255, 65, 0.7);
+          border-width: 4px;
+          box-shadow: 0 0 30px rgba(0, 255, 65, 1);
+        }
       `}</style>
+
+      {/* Botón de cambio de tema en estilo hacker */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className="absolute top-4 right-4 z-[1000] bg-black hover:bg-gray-900 text-green-400 font-mono font-semibold py-2 px-4 border-2 border-green-400 rounded shadow-lg transition-all hover:shadow-green-400"
+        title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        style={{ boxShadow: '0 0 10px rgba(0, 255, 65, 0.5)' }}
+      >
+        {isDarkMode ? '[☀]' : '[🌙]'}
+        <span className="hidden sm:inline ml-2">{isDarkMode ? 'LIGHT_MODE' : 'DARK_MODE'}</span>
+      </button>
       
       <div className="hacker-map w-full h-full">
         <LeafletMap
@@ -252,13 +310,12 @@ export default function HackerMapContainer({
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={true}
         >
-          {/* Usando CartoDB Dark Matter para tema oscuro */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url={isDarkMode ? darkTileUrl : lightTileUrl}
           />
 
-          {/* Marcadores de cámaras */}
+          {/* Marcadores de cámaras (sin clustering) */}
           {showCameras &&
             cameras.map((camera) => (
               <Marker
@@ -291,54 +348,75 @@ export default function HackerMapContainer({
               </Marker>
             ))}
 
-          {/* Marcadores de emergencias */}
-          {showEmergencies &&
-            emergencias
-              .filter((e) => e.coordenadas && (!emergencyFilter || emergencyFilter.has(e.tipoEmergencia)))
-              .map((emergencia) => (
-                <Marker
-                  key={emergencia.id}
-                  position={[emergencia.coordenadas!.latitud, emergencia.coordenadas!.longitud]}
-                  icon={getEmergencyIcon(emergencia.tipoEmergencia)}
-                  eventHandlers={{
-                    click: () => onEmergencyClick?.(emergencia),
-                  }}
-                >
-                  <Popup>
-                    <div className="p-2">
-                      <h3 className="font-bold mb-2">[EMERGENCIA] {emergencia.tipoEmergencia}</h3>
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">FENÓMENO:</span> {emergencia.fenomeno}
-                      </p>
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">FECHA:</span>{' '}
-                        {new Date(emergencia.fecha).toLocaleDateString('es-PE')} {new Date(emergencia.fecha).toLocaleTimeString('es-PE')}
-                      </p>
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">UBICACIÓN:</span> {emergencia.ubicacion.distrito},{' '}
-                        {emergencia.ubicacion.provincia}
-                      </p>
-                      {emergencia.descripcion && (
+          {/* Marcadores de emergencias con clustering */}
+          {showEmergencies && (
+            <MarkerClusterGroup
+              chunkedLoading
+              maxClusterRadius={30}
+              spiderfyOnMaxZoom={true}
+              showCoverageOnHover={true}
+              zoomToBoundsOnClick={true}
+              iconCreateFunction={(cluster: any) => {
+                const count = cluster.getChildCount();
+                let size = 'small';
+                if (count >= 10) size = 'large';
+                else if (count >= 5) size = 'medium';
+                
+                return L.divIcon({
+                  html: `<div><span>[${count}]</span></div>`,
+                  className: `marker-cluster marker-cluster-${size} hacker-emergency-cluster`,
+                  iconSize: L.point(40, 40),
+                });
+              }}
+            >
+              {emergencias
+                .filter((e) => e.coordenadas && (!emergencyFilter || emergencyFilter.has(e.tipoEmergencia)))
+                .map((emergencia) => (
+                  <Marker
+                    key={emergencia.id}
+                    position={[emergencia.coordenadas!.latitud, emergencia.coordenadas!.longitud]}
+                    icon={getEmergencyIcon(emergencia.tipoEmergencia)}
+                    eventHandlers={{
+                      click: () => onEmergencyClick?.(emergencia),
+                    }}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <h3 className="font-bold mb-2">[EMERGENCIA] {emergencia.tipoEmergencia}</h3>
                         <p className="text-sm mb-1">
-                          <span className="font-semibold">DESC:</span> {emergencia.descripcion}
+                          <span className="font-semibold">FENÓMENO:</span> {emergencia.fenomeno}
                         </p>
-                      )}
-                      {emergencia.afectados && (
-                        <div className="text-sm mt-2 border-t border-green-500 pt-2">
-                          <p className="font-semibold">AFECTADOS:</p>
-                          {emergencia.afectados.fallecidos && (
-                            <p>Fallecidos: {emergencia.afectados.fallecidos}</p>
-                          )}
-                          {emergencia.afectados.heridos && <p>Heridos: {emergencia.afectados.heridos}</p>}
-                          {emergencia.afectados.damnificados && (
-                            <p>Damnificados: {emergencia.afectados.damnificados}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+                        <p className="text-sm mb-1">
+                          <span className="font-semibold">FECHA:</span>{' '}
+                          {new Date(emergencia.fecha).toLocaleDateString('es-PE')} {new Date(emergencia.fecha).toLocaleTimeString('es-PE')}
+                        </p>
+                        <p className="text-sm mb-1">
+                          <span className="font-semibold">UBICACIÓN:</span> {emergencia.ubicacion.distrito},{' '}
+                          {emergencia.ubicacion.provincia}
+                        </p>
+                        {emergencia.descripcion && (
+                          <p className="text-sm mb-1">
+                            <span className="font-semibold">DESC:</span> {emergencia.descripcion}
+                          </p>
+                        )}
+                        {emergencia.afectados && (
+                          <div className="text-sm mt-2 border-t border-green-500 pt-2">
+                            <p className="font-semibold">AFECTADOS:</p>
+                            {emergencia.afectados.fallecidos && (
+                              <p>Fallecidos: {emergencia.afectados.fallecidos}</p>
+                            )}
+                            {emergencia.afectados.heridos && <p>Heridos: {emergencia.afectados.heridos}</p>}
+                            {emergencia.afectados.damnificados && (
+                              <p>Damnificados: {emergencia.afectados.damnificados}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+            </MarkerClusterGroup>
+          )}
         </LeafletMap>
       </div>
     </div>

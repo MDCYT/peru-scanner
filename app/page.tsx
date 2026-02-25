@@ -31,6 +31,7 @@ export default function HomePage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showInfoBanner, setShowInfoBanner] = useState(true);
   const [konamiKeys, setKonamiKeys] = useState<string[]>([]);
+  const [konamiActivated, setKonamiActivated] = useState(false);
 
   // Detector del código Konami
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function HomePage() {
           
           if (isMatch) {
             // ¡Código Konami activado!
-            router.push('/hacker');
+            setKonamiActivated(true);
             return [];
           }
         }
@@ -71,7 +72,14 @@ export default function HomePage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
+  }, []);
+
+  // Navegar cuando se active el código Konami
+  useEffect(() => {
+    if (konamiActivated) {
+      router.push('/hacker');
+    }
+  }, [konamiActivated, router]);
 
   useEffect(() => {
     async function loadData() {
@@ -120,7 +128,7 @@ export default function HomePage() {
         <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-xl sm:text-2xl" role="img" aria-label="Bandera de Perú">&#x1F1F5;&#x1F1EA;</span>
+              <span className="text-xl sm:text-2xl" role="img" aria-label="Bandera de Perú" style={{ fontFamily: "'Noto Color Emoji', sans-serif" }}>&#x1F1F5;&#x1F1EA;</span>
             </div>
             <div>
               <h1 className="text-lg sm:text-2xl font-bold">Alerta Perú</h1>
