@@ -38,7 +38,16 @@ export async function getEmergencias(): Promise<Emergencia[]> {
  */
 export async function getBomberos24Horas(): Promise<Emergencia[]> {
   try {
-    const response = await fetch('/api/bomberos-24horas');
+    // Usar URL absoluta en producción, relativa en desarrollo
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/bomberos-24horas`, {
+      cache: 'no-store',
+    });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -96,7 +105,16 @@ export async function getBomberos24Horas(): Promise<Emergencia[]> {
  */
 export async function getIndeci24Horas(): Promise<Emergencia[]> {
   try {
-    const response = await fetch('/api/indeci-emergencias');
+    // Usar URL absoluta en producción, relativa en desarrollo
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/indeci-emergencias`, {
+      cache: 'no-store',
+    });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
