@@ -351,6 +351,133 @@ function getEmergencyIcon(tipo: string): L.Icon {
   return iconCache[tipo];
 }
 
+/**
+ * Componente para botón de ubicación del usuario (modo hacker)
+ */
+function HackerLocationButton() {
+  const map = useMap();
+  const controlRef = useRef<L.Control | null>(null);
+
+  useEffect(() => {
+    // Solo crear el control una vez
+    if (controlRef.current) return;
+
+    // Crear un control personalizado para la ubicación con tema hacker
+    const locateControl = L.Control.extend({
+      options: {
+        position: 'topright',
+      },
+
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'locate-control-hacker');
+        container.style.cursor = 'pointer';
+        container.title = '[SISTEMA] Ir a tu ubicacion actual';
+
+        const button = L.DomUtil.create('button', '', container);
+        button.innerHTML = '📍';
+        button.style.cssText = `
+          background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
+          border: 2px solid #00ff41;
+          border-radius: 4px;
+          padding: 6px 8px;
+          font-size: 16px;
+          cursor: pointer;
+          box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+          color: #00ff41;
+          font-weight: bold;
+          transition: all 0.3s;
+        `;
+
+        button.onmouseover = () => {
+          button.style.boxShadow = '0 0 25px rgba(0, 255, 65, 0.8)';
+          button.style.backgroundColor = 'rgba(0, 255, 65, 0.15)';
+        };
+        button.onmouseout = () => {
+          button.style.boxShadow = '0 0 15px rgba(0, 255, 65, 0.4)';
+          button.style.backgroundColor = 'rgba(0, 255, 65, 0.05)';
+        };
+
+        button.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (!navigator.geolocation) {
+            alert('[ERROR] Geolocalización no soportada');
+            return;
+          }
+
+          button.style.opacity = '0.5';
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude, accuracy } = position.coords;
+              map.setView([latitude, longitude], 16);
+
+              // Agregar marcador de ubicación del usuario con tema hacker
+              const userMarker = L.marker([latitude, longitude], {
+                icon: L.icon({
+                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI2IiBmaWxsPSIjMDBmZjQxIi8+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMyIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==',
+                  iconSize: [32, 32],
+                  iconAnchor: [16, 16],
+                  popupAnchor: [0, -16],
+                }),
+              });
+
+              userMarker
+                .addTo(map)
+                .bindPopup(
+                  `<div class="p-2" style="font-family: 'Courier New', monospace;"><h3 style="color: #00ff41; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #00ff41; padding-bottom: 4px;">[TU CASA]</h3><p style="color: #00ff41; font-size: 12px; margin-bottom: 4px;">LAT: ${latitude.toFixed(6)}</p><p style="color: #00ff41; font-size: 12px; margin-bottom: 4px;">LON: ${longitude.toFixed(6)}</p><p style="color: #00cc33; font-size: 11px;">PRECISION: ±${Math.round(accuracy)}m</p></div>`
+                );
+
+              // Agregar círculo de precisión con tema hacker
+              L.circle([latitude, longitude], {
+                radius: accuracy,
+                weight: 2,
+                color: '#00ff41',
+                opacity: 0.5,
+                fill: true,
+                fillColor: '#00ff41',
+                fillOpacity: 0.05,
+              }).addTo(map);
+
+              button.style.opacity = '1';
+            },
+            (error) => {
+              console.error('Error al obtener ubicación:', error);
+              let errorMsg = '[ERROR] No se pudo obtener tu ubicacion.';
+              if (error.code === error.PERMISSION_DENIED) {
+                errorMsg += ' Permite el acceso en ajustes.';
+              }
+              alert(errorMsg);
+              button.style.opacity = '1';
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0,
+            }
+          );
+        };
+
+        return container;
+      },
+    });
+
+    const control = new locateControl();
+    control.addTo(map);
+    controlRef.current = control;
+
+    return () => {
+      if (controlRef.current && map) {
+        map.removeControl(controlRef.current);
+        controlRef.current = null;
+      }
+    };
+  }, [map]);
+
+  return null;
+}
+
 export default function HackerMapContainer({
   cameras,
   emergencias,
@@ -388,6 +515,14 @@ export default function HackerMapContainer({
   return (
     <div className="relative w-full h-full">
       <style jsx global>{`
+        .hacker-map .leaflet-popup {
+          z-index: 1001 !important;
+        }
+        
+        .hacker-map .leaflet-popup-close-button {
+          z-index: 1002 !important;
+        }
+
         .hacker-map .leaflet-container {
           background: #000000;
           filter: brightness(0.8) contrast(1.3) saturate(1.5);
@@ -543,7 +678,7 @@ export default function HackerMapContainer({
       {/* Botón de cambio de tema en estilo hacker */}
       <button
         onClick={() => setIsDarkMode(!isDarkMode)}
-        className="absolute top-4 right-4 z-[1000] bg-black hover:bg-gray-900 text-green-400 font-mono font-semibold py-2 px-4 border-2 border-green-400 rounded shadow-lg transition-all hover:shadow-green-400"
+        className="absolute top-4 left-4 z-[1000] bg-black hover:bg-gray-900 text-green-400 font-mono font-semibold py-2 px-4 border-2 border-green-400 rounded shadow-lg transition-all hover:shadow-green-400"
         title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
         style={{ boxShadow: '0 0 10px rgba(0, 255, 65, 0.5)' }}
       >
@@ -562,6 +697,9 @@ export default function HackerMapContainer({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://carto.com/">CARTO</a>'
             url={isDarkMode ? darkTileUrl : lightTileUrl}
           />
+
+          {/* Componente para mostrar ubicación del usuario */}
+          <HackerLocationButton />
 
           <HackerCriminalResidencesLayer
             showCriminalResidences={showCriminalResidences}

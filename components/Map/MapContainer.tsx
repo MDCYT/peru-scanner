@@ -495,6 +495,129 @@ function getEmergencyIcon(tipo: string): L.Icon {
   return iconCache[tipo];
 }
 
+/**
+ * Componente para botón de ubicación del usuario
+ */
+function LocationButton() {
+  const map = useMap();
+  const controlRef = useRef<L.Control | null>(null);
+
+  useEffect(() => {
+    // Solo crear el control una vez
+    if (controlRef.current) return;
+
+    // Crear un control personalizado para la ubicación
+    const locateControl = L.Control.extend({
+      options: {
+        position: 'topright',
+      },
+
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'locate-control');
+        container.style.cursor = 'pointer';
+        container.title = 'Ir a tu ubicación actual';
+
+        const button = L.DomUtil.create('button', '', container);
+        button.innerHTML = '📍';
+        button.style.cssText = `
+          background-color: white;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          padding: 8px 10px;
+          font-size: 18px;
+          cursor: pointer;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+          transition: background-color 0.2s;
+        `;
+
+        button.onmouseover = () => {
+          button.style.backgroundColor = '#f5f5f5';
+        };
+        button.onmouseout = () => {
+          button.style.backgroundColor = 'white';
+        };
+
+        button.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (!navigator.geolocation) {
+            alert('Geolocalización no está soportada en tu navegador');
+            return;
+          }
+
+          button.style.opacity = '0.5';
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude, accuracy } = position.coords;
+              map.setView([latitude, longitude], 16);
+
+              // Agregar marcador de ubicación del usuario
+              const userMarker = L.marker([latitude, longitude], {
+                icon: L.icon({
+                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI2IiBmaWxsPSIjMDA4MGZmIi8+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMyIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
+                  iconSize: [32, 32],
+                  iconAnchor: [16, 16],
+                  popupAnchor: [0, -16],
+                }),
+              });
+
+              userMarker
+                .addTo(map)
+                .bindPopup(
+                  `<div class="p-2"><h3 class="font-bold text-blue-600 mb-2">Tu Casa</h3><p class="text-xs mb-1">Lat: ${latitude.toFixed(6)}</p><p class="text-xs mb-1">Lon: ${longitude.toFixed(6)}</p><p class="text-xs text-gray-500">Precisión: ±${Math.round(accuracy)}m</p></div>`
+                );
+
+              // Agregar círculo de precisión
+              L.circle([latitude, longitude], {
+                radius: accuracy,
+                weight: 2,
+                color: '#0080ff',
+                opacity: 0.3,
+                fill: true,
+                fillColor: '#0080ff',
+                fillOpacity: 0.1,
+              }).addTo(map);
+
+              button.style.opacity = '1';
+            },
+            (error) => {
+              console.error('Error al obtener ubicación:', error);
+              let errorMsg = 'No se pudo obtener tu ubicación.';
+              if (error.code === error.PERMISSION_DENIED) {
+                errorMsg += ' Por favor, permite el acceso a tu ubicación en los ajustes del navegador.';
+              }
+              alert(errorMsg);
+              button.style.opacity = '1';
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0,
+            }
+          );
+        };
+
+        return container;
+      },
+    });
+
+    const control = new locateControl();
+    control.addTo(map);
+    controlRef.current = control;
+
+    return () => {
+      if (controlRef.current && map) {
+        map.removeControl(controlRef.current);
+        controlRef.current = null;
+      }
+    };
+  }, [map]);
+
+  return null;
+}
+
 export default function MapComponent({
   cameras,
   emergencias,
@@ -536,7 +659,7 @@ export default function MapComponent({
       {/* Botón de cambio de tema */}
       <button
         onClick={() => setIsDarkMode(!isDarkMode)}
-        className="absolute top-4 right-4 z-[1000] bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-lg transition-colors flex items-center gap-2"
+        className="absolute top-4 left-4 z-[1000] bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-lg transition-colors flex items-center gap-2"
         title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       >
         {isDarkMode ? '☀️' : '🌙'}
@@ -553,6 +676,9 @@ export default function MapComponent({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url={isDarkMode ? darkTileUrl : lightTileUrl}
         />
+
+        {/* Componente para mostrar ubicación del usuario */}
+        <LocationButton />
 
         {/* Componente de carga dinámica de residencias criminales */}
         <CriminalResidencesLayer
@@ -778,6 +904,14 @@ export default function MapComponent({
 
       {/* Estilos personalizados para clusters de emergencias y residencias criminales */}
       <style jsx global>{`
+        .leaflet-popup {
+          z-index: 1001 !important;
+        }
+        
+        .leaflet-popup-close-button {
+          z-index: 1002 !important;
+        }
+
         .emergency-cluster {
           background-color: rgba(255, 0, 0, 0.6);
           border-radius: 50%;
