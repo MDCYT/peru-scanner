@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Rectangle, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Rectangle, Circle, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Camera, Emergencia, HeatmapPoint } from '@/types';
+import { Camera, Emergencia, HeatmapPoint, Earthquake } from '@/types';
 import { getHeatmapData } from '@/services/indeciService';
 
 // Fix para los iconos de Leaflet en Next.js
@@ -17,8 +17,10 @@ L.Icon.Default.mergeOptions({
 interface MapComponentProps {
   cameras: Camera[];
   emergencias: Emergencia[];
+  earthquakes: Earthquake[];
   showCameras: boolean;
   showEmergencies: boolean;
+  showEarthquakes: boolean;
   showCriminalResidences: boolean;
   criminalResidencesData: HeatmapPoint[];
   criminalResidencesFilter?: {
@@ -94,6 +96,20 @@ const criminalResidenceIcon = new L.Icon({
   popupAnchor: [0, -36],
   className: 'criminal-residence-marker-icon',
 });
+
+function getEarthquakeColor(magnitude: number): string {
+  if (magnitude >= 6) return '#DC2626';
+  if (magnitude >= 5) return '#EA580C';
+  if (magnitude >= 4) return '#F59E0B';
+  if (magnitude >= 3) return '#84CC16';
+  return '#22C55E';
+}
+
+function getEarthquakeRadiusMeters(magnitude: number): number {
+  const clamped = Math.max(0, magnitude);
+  const radiusKm = Math.min(300, Math.max(10, clamped * clamped * 4));
+  return radiusKm * 1000;
+}
 
 /**
  * Componente internal que maneja la carga dinámica de residencias criminales
@@ -482,8 +498,10 @@ function getEmergencyIcon(tipo: string): L.Icon {
 export default function MapComponent({
   cameras,
   emergencias,
+  earthquakes,
   showCameras,
   showEmergencies,
+  showEarthquakes,
   showCriminalResidences,
   criminalResidencesData,
   criminalResidencesFilter,
@@ -541,6 +559,95 @@ export default function MapComponent({
           showCriminalResidences={showCriminalResidences}
           criminalResidencesFilter={criminalResidencesFilter}
         />
+
+        {/* Areas de impacto estimado de sismos */}
+        {showEarthquakes &&
+          earthquakes.map((quake) => {
+            const lat = parseFloat(quake.latitude);
+            const lon = parseFloat(quake.longitude);
+            const magnitude = parseFloat(quake.magnitude || '0');
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+              return null;
+            }
+
+            const dateValue = quake.local_date || quake.datetime_utc || quake.utc_date || '';
+            const date = dateValue ? new Date(dateValue) : null;
+            const color = getEarthquakeColor(Number.isFinite(magnitude) ? magnitude : 0);
+            const radius = getEarthquakeRadiusMeters(Number.isFinite(magnitude) ? magnitude : 0);
+
+            return (
+              <Circle
+                key={`quake-${quake.id}`}
+                center={[lat, lon]}
+                radius={radius}
+                pathOptions={{
+                  color,
+                  weight: 2,
+                  fillColor: color,
+                  fillOpacity: 0.15,
+                }}
+              >
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-bold text-orange-700 mb-2">Sismo</h3>
+                    {date && !Number.isNaN(date.getTime()) && (
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">Fecha:</span>{' '}
+                        {date.toLocaleDateString('es-PE')} {date.toLocaleTimeString('es-PE')}
+                      </p>
+                    )}
+                    <p className="text-sm mb-1">
+                      <span className="font-semibold">Magnitud:</span> {quake.magnitude || 'N/D'}
+                    </p>
+                    <p className="text-sm mb-1">
+                      <span className="font-semibold">Profundidad:</span> {quake.depth || 'N/D'} km
+                    </p>
+                    {quake.reference && (
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">Referencia:</span> {quake.reference}
+                      </p>
+                    )}
+                    <p className="text-sm">
+                      <span className="font-semibold">Coordenadas:</span> {lat.toFixed(6)}, {lon.toFixed(6)}
+                    </p>
+                    <div className="text-sm mt-2 border-t pt-2">
+                      {quake.seismic_map_url && (
+                        <a
+                          href={quake.seismic_map_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-orange-600 hover:text-orange-700"
+                        >
+                          Ver mapa sismico
+                        </a>
+                      )}
+                      {quake.accelerometric_map_url && (
+                        <a
+                          href={quake.accelerometric_map_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-orange-600 hover:text-orange-700"
+                        >
+                          Ver mapa PGA
+                        </a>
+                      )}
+                      {quake.accelerometric_report_pdf && (
+                        <a
+                          href={quake.accelerometric_report_pdf}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-orange-600 hover:text-orange-700"
+                        >
+                          Reporte acelerometrico
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </Popup>
+              </Circle>
+            );
+          })}
 
         {/* Marcadores de cámaras (sin clustering) */}
         {showCameras &&
@@ -741,6 +848,7 @@ export default function MapComponent({
         .marker-cluster-large.criminal-cluster {
           background-color: rgba(120, 40, 180, 0.8);
         }
+
       `}</style>
     </div>
   );

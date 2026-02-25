@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Emergencia, HeatmapPoint, CrimeType } from '@/types';
+import { Emergencia, HeatmapPoint, CrimeType, Earthquake } from '@/types';
 
 // URL de la API de datos abiertos de Perú para INDECI
 const INDECI_API_BASE = 'http://www.datosabiertos.gob.pe/api/3/action';
@@ -17,6 +17,30 @@ export async function getEmergenciasDatasetInfo() {
     console.error('Error al obtener información del dataset:', error);
     return null;
   }
+}
+
+function getEarthquakeYear(quake: Earthquake): string | null {
+  const dateString = quake.local_date || quake.utc_date || quake.datetime_utc || null;
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getUTCFullYear().toString();
+}
+
+function applyEarthquakeMapFallbacks(quake: Earthquake): Earthquake {
+  const year = getEarthquakeYear(quake);
+  const reportNumber = quake.report_number;
+
+  if (!year || !reportNumber) return quake;
+
+  const fallbackSeismic = `https://www.igp.gob.pe/mapas-tematicos/${year}/${reportNumber}/sismo.png`;
+  const fallbackAccelerometric = `https://www.igp.gob.pe/mapas-tematicos/${year}/${reportNumber}/pga.png`;
+
+  return {
+    ...quake,
+    seismic_map_url: quake.seismic_map_url || fallbackSeismic,
+    accelerometric_map_url: quake.accelerometric_map_url || fallbackAccelerometric,
+  };
 }
 
 /**
@@ -334,6 +358,39 @@ export async function getCrimeTypes(): Promise<CrimeType[]> {
     return apiResponse.data;
   } catch (error) {
     console.error('Error al obtener tipos de crímenes:', error);
+    return [];
+  }
+}
+
+/**
+ * Obtiene sismos recientes (IGP)
+ */
+export async function getEarthquakes(): Promise<Earthquake[]> {
+  try {
+    const response = await fetch('https://api.mdcdev.me/v2/peru/igp/earthquakes', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error(`Earthquakes API error: ${response.status}`);
+      return [];
+    }
+
+    const apiResponse = await response.json();
+    const earthquakesArray = apiResponse.data || [];
+
+    if (!apiResponse.success || earthquakesArray.length === 0) {
+      console.log('No hay sismos disponibles');
+      return [];
+    }
+
+    return earthquakesArray.map((quake: Earthquake) => applyEarthquakeMapFallbacks(quake));
+  } catch (error) {
+    console.error('Error al obtener sismos:', error);
     return [];
   }
 }

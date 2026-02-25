@@ -81,3 +81,24 @@ export interface CrimeType {
   crime_type: string;
   count: number;
 }
+
+// Tipo para datos de sismos (IGP)
+export interface Earthquake {
+  id: number;
+  code: string | null;
+  report_number: number | null;
+  local_date: string | null;
+  local_time: string | null;
+  utc_date: string | null;
+  utc_time: string | null;
+  datetime_utc: string | null;
+  latitude: string;
+  longitude: string;
+  reference: string | null;
+  magnitude: string | null;
+  depth: string | null;
+  intensity: string | null;
+  seismic_map_url: string | null;
+  accelerometric_map_url: string | null;
+  accelerometric_report_pdf: string | null;
+}

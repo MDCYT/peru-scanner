@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Camera, Emergencia, HeatmapPoint, CrimeType } from '@/types';
-import { AlertTriangle, Video, Activity, X, ChevronDown, Filter, Flame } from 'lucide-react';
+import { Camera, Emergencia, HeatmapPoint, CrimeType, Earthquake } from '@/types';
+import { AlertTriangle, Video, Activity, X, ChevronDown, Filter, Flame, Zap } from 'lucide-react';
 
 interface DashboardProps {
   cameras: Camera[];
   emergencias: Emergencia[];
+  earthquakes: Earthquake[];
   showCameras: boolean;
   showEmergencies: boolean;
+  showEarthquakes: boolean;
   showCriminalResidences: boolean;
   criminalResidencesData: HeatmapPoint[];
   crimeTypes: CrimeType[];
   onToggleCameras: () => void;
   onToggleEmergencies: () => void;
+  onToggleEarthquakes: () => void;
   onToggleCriminalResidences: () => void;
   onEmergencyFilterChange?: (filter: Set<string> | undefined) => void;
   onCriminalResidencesFilterChange?: (filters: {
@@ -25,13 +28,16 @@ interface DashboardProps {
 export default function Dashboard({
   cameras,
   emergencias,
+  earthquakes,
   showCameras,
   showEmergencies,
+  showEarthquakes,
   showCriminalResidences,
   criminalResidencesData,
   crimeTypes,
   onToggleCameras,
   onToggleEmergencies,
+  onToggleEarthquakes,
   onToggleCriminalResidences,
   onEmergencyFilterChange,
   onCriminalResidencesFilterChange,
@@ -66,6 +72,14 @@ export default function Dashboard({
   // Estadísticas de emergencias
   const emergenciasRecientes = emergencias.filter((e) => {
     const fecha = new Date(e.fecha);
+    const hace24Horas = new Date();
+    hace24Horas.setHours(hace24Horas.getHours() - 24);
+    return fecha >= hace24Horas;
+  });
+
+  const sismosRecientes = earthquakes.filter((q) => {
+    const fecha = new Date(q.local_date || q.datetime_utc || q.utc_date || '');
+    if (Number.isNaN(fecha.getTime())) return false;
     const hace24Horas = new Date();
     hace24Horas.setHours(hace24Horas.getHours() - 24);
     return fecha >= hace24Horas;
@@ -197,6 +211,20 @@ export default function Dashboard({
               </div>
             )}
           </div>
+
+          {/* Sismos */}
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showEarthquakes}
+              onChange={onToggleEarthquakes}
+              className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"
+            />
+            <span className="text-gray-700 flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-orange-600" />
+              Sismos (IGP)
+            </span>
+          </label>
 
           {/* Última Residencia de Privados de Libertad */}
           <div className="space-y-2">
@@ -381,6 +409,15 @@ export default function Dashboard({
                 <p className="text-2xl font-bold text-sky-700">{emergenciasINDECI.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-sky-400" />
+            </div>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Sismos (24h)</p>
+                <p className="text-2xl font-bold text-orange-700">{sismosRecientes.length}</p>
+              </div>
+              <Zap className="w-8 h-8 text-orange-400" />
             </div>
           </div>
         </div>

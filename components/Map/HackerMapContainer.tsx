@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Camera, Emergencia, HeatmapPoint } from '@/types';
+import { Camera, Emergencia, HeatmapPoint, Earthquake } from '@/types';
 import { getHeatmapData } from '@/services/indeciService';
 
 // Fix para los iconos de Leaflet en Next.js
@@ -19,8 +19,10 @@ L.Icon.Default.mergeOptions({
 interface MapComponentProps {
   cameras: Camera[];
   emergencias: Emergencia[];
+  earthquakes: Earthquake[];
   showCameras: boolean;
   showEmergencies: boolean;
+  showEarthquakes: boolean;
   showCriminalResidences: boolean;
   criminalResidencesData: HeatmapPoint[];
   criminalResidencesFilter?: {
@@ -83,6 +85,20 @@ const hackerCriminalResidenceIcon = new L.Icon({
   popupAnchor: [0, -36],
   className: 'hacker-criminal-marker-icon',
 });
+
+function getHackerEarthquakeColor(magnitude: number): string {
+  if (magnitude >= 6) return '#ff3b30';
+  if (magnitude >= 5) return '#ff7a00';
+  if (magnitude >= 4) return '#ffd60a';
+  if (magnitude >= 3) return '#34c759';
+  return '#00ff41';
+}
+
+function getEarthquakeRadiusMeters(magnitude: number): number {
+  const clamped = Math.max(0, magnitude);
+  const radiusKm = Math.min(300, Math.max(10, clamped * clamped * 4));
+  return radiusKm * 1000;
+}
 
 function HackerCriminalResidencesLayer({
   showCriminalResidences,
@@ -338,8 +354,10 @@ function getEmergencyIcon(tipo: string): L.Icon {
 export default function HackerMapContainer({
   cameras,
   emergencias,
+  earthquakes,
   showCameras,
   showEmergencies,
+  showEarthquakes,
   showCriminalResidences,
   criminalResidencesData,
   criminalResidencesFilter,
@@ -549,6 +567,93 @@ export default function HackerMapContainer({
             showCriminalResidences={showCriminalResidences}
             criminalResidencesFilter={criminalResidencesFilter}
           />
+
+          {/* Areas de impacto estimado de sismos */}
+          {showEarthquakes &&
+            earthquakes.map((quake) => {
+              const lat = parseFloat(quake.latitude);
+              const lon = parseFloat(quake.longitude);
+              const magnitude = parseFloat(quake.magnitude || '0');
+
+              if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+              const dateValue = quake.local_date || quake.datetime_utc || quake.utc_date || '';
+              const date = dateValue ? new Date(dateValue) : null;
+              const color = getHackerEarthquakeColor(Number.isFinite(magnitude) ? magnitude : 0);
+              const radius = getEarthquakeRadiusMeters(Number.isFinite(magnitude) ? magnitude : 0);
+
+              return (
+                <Circle
+                  key={`hacker-quake-${quake.id}`}
+                  center={[lat, lon]}
+                  radius={radius}
+                  pathOptions={{
+                    color,
+                    weight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.15,
+                  }}
+                >
+                  <Popup>
+                    <div className="p-2">
+                      <h3 className="font-bold mb-2">[SISMO]</h3>
+                      {date && !Number.isNaN(date.getTime()) && (
+                        <p className="text-sm mb-1">
+                          <span className="font-semibold">FECHA:</span>{' '}
+                          {date.toLocaleDateString('es-PE')} {date.toLocaleTimeString('es-PE')}
+                        </p>
+                      )}
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">MAGNITUD:</span> {quake.magnitude || 'N/D'}
+                      </p>
+                      <p className="text-sm mb-1">
+                        <span className="font-semibold">PROFUNDIDAD:</span> {quake.depth || 'N/D'} km
+                      </p>
+                      {quake.reference && (
+                        <p className="text-sm mb-1">
+                          <span className="font-semibold">REF:</span> {quake.reference}
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        <span className="font-semibold">COORD:</span> {lat.toFixed(6)}, {lon.toFixed(6)}
+                      </p>
+                      <div className="text-sm mt-2 border-t border-green-500 pt-2">
+                        {quake.seismic_map_url && (
+                          <a
+                            href={quake.seismic_map_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            VER MAPA SISMICO
+                          </a>
+                        )}
+                        {quake.accelerometric_map_url && (
+                          <a
+                            href={quake.accelerometric_map_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            VER MAPA PGA
+                          </a>
+                        )}
+                        {quake.accelerometric_report_pdf && (
+                          <a
+                            href={quake.accelerometric_report_pdf}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            REPORTE ACELEROMETRICO
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </Popup>
+                </Circle>
+              );
+            })}
 
           {/* Marcadores de cámaras (sin clustering) */}
           {showCameras &&

@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Camera, Emergencia, HeatmapPoint, CrimeType } from '@/types';
+import { Camera, Emergencia, HeatmapPoint, CrimeType, Earthquake } from '@/types';
 import { getCameras } from '@/services/camerasService';
-import { getEmergencias, getHeatmapData, getCrimeTypes } from '@/services/indeciService';
+import { getEmergencias, getCrimeTypes, getEarthquakes } from '@/services/indeciService';
 import Dashboard from '@/components/Dashboard/Dashboard';
 import CameraViewer from '@/components/CameraViewer/CameraViewer';
 
@@ -23,11 +23,13 @@ export default function HomePage() {
   const router = useRouter();
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [emergencias, setEmergencias] = useState<Emergencia[]>([]);
+  const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
   const [criminalResidencesData, setCriminalResidencesData] = useState<HeatmapPoint[]>([]);
   const [crimeTypes, setCrimeTypes] = useState<CrimeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCameras, setShowCameras] = useState(true);
   const [showEmergencies, setShowEmergencies] = useState(true);
+  const [showEarthquakes, setShowEarthquakes] = useState(true);
   const [showCriminalResidences, setShowCriminalResidences] = useState(false); // Desactivado por defecto
   const [emergencyFilter, setEmergencyFilter] = useState<Set<string> | undefined>(undefined); // undefined = mostrar todo
   const [criminalResidencesFilter, setCriminalResidencesFilter] = useState<{
@@ -92,14 +94,16 @@ export default function HomePage() {
     async function loadData() {
       try {
         setLoading(true);
-        const [camerasData, emergenciasData, crimeTypesData] = await Promise.all([
+        const [camerasData, emergenciasData, earthquakesData, crimeTypesData] = await Promise.all([
           getCameras(),
           getEmergencias(),
+          getEarthquakes(),
           getCrimeTypes(),
           // Se eliminó getHeatmapData aquí - se carga dinámicamente en el mapa
         ]);
         setCameras(camerasData);
         setEmergencias(emergenciasData);
+        setEarthquakes(earthquakesData);
         setCriminalResidencesData([]); // Iniciar vacío, se cargará dinámicamente
         setCrimeTypes(crimeTypesData);
       } catch (error) {
@@ -118,6 +122,10 @@ export default function HomePage() {
 
   const handleToggleEmergencies = () => {
     setShowEmergencies(!showEmergencies);
+  };
+
+  const handleToggleEarthquakes = () => {
+    setShowEarthquakes(!showEarthquakes);
   };
 
   const handleToggleCriminalResidences = () => {
@@ -176,13 +184,16 @@ export default function HomePage() {
               <Dashboard
                 cameras={cameras}
                 emergencias={emergencias}
+                earthquakes={earthquakes}
                 showCameras={showCameras}
                 showEmergencies={showEmergencies}
+                showEarthquakes={showEarthquakes}
                 showCriminalResidences={showCriminalResidences}
                 criminalResidencesData={criminalResidencesData}
                 crimeTypes={crimeTypes}
                 onToggleCameras={handleToggleCameras}
                 onToggleEmergencies={handleToggleEmergencies}
+                onToggleEarthquakes={handleToggleEarthquakes}
                 onToggleCriminalResidences={handleToggleCriminalResidences}
                 onEmergencyFilterChange={setEmergencyFilter}
                 onCriminalResidencesFilterChange={setCriminalResidencesFilter}
@@ -204,8 +215,10 @@ export default function HomePage() {
             <MapContainer
               cameras={cameras}
               emergencias={emergencias}
+              earthquakes={earthquakes}
               showCameras={showCameras}
               showEmergencies={showEmergencies}
+              showEarthquakes={showEarthquakes}
               showCriminalResidences={showCriminalResidences}
               criminalResidencesData={criminalResidencesData}
               criminalResidencesFilter={criminalResidencesFilter}
@@ -251,6 +264,12 @@ export default function HomePage() {
                     <span className="text-gray-700">Mat. peligrosos</span>
                   </div>
                 </>
+              )}
+              {showEarthquakes && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0" style={{backgroundColor: '#F97316'}}></div>
+                  <span className="text-gray-700">Sismos (IGP)</span>
+                </div>
               )}
               {showCriminalResidences && (
                 <div className="border-t border-gray-200 pt-1.5 sm:pt-2 mt-1.5 sm:mt-2">
