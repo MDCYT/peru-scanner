@@ -19,8 +19,149 @@ export async function getEmergenciasDatasetInfo() {
   }
 }
 
+/**
+ * Combina local_date y local_time para obtener la hora peruana correcta
+ * local_time viene como timestamp donde los días adicionales representan horas acumuladas
+ */
+function getPeruDateTime(quake: Earthquake): string | null {
+  // Priorizar local_date y local_time que ya deberían estar en hora peruana
+  if (!quake.local_date || !quake.local_time) {
+    // Fallback a UTC si no hay datos locales
+    if (!quake.utc_date || !quake.utc_time) return null;
+    return getPeruDateTimeFromUTC(quake);
+  }
+  
+  try {
+    // Extraer la fecha de local_date
+    const dateObj = new Date(quake.local_date);
+    let year = dateObj.getUTCFullYear();
+    let month = dateObj.getUTCMonth() + 1;
+    let day = dateObj.getUTCDate();
+    
+    // local_time viene como epoch time donde puede tener días extras
+    // Ejemplo: "1970-01-02T07:01:36.000Z" significa 1 día completo (24h) + 7:01:36
+    const timeObj = new Date(quake.local_time);
+    const totalSeconds = Math.floor(timeObj.getTime() / 1000);
+    
+    // DEBUG: Log para verificar valores
+    if (quake.report_number) {
+      console.log(`[Earthquake #${quake.report_number}] local_time:`, quake.local_time, 
+                  'totalSeconds:', totalSeconds, 
+                  'totalHours:', Math.floor(totalSeconds / 3600));
+    }
+    
+    // Convertir a horas, minutos, segundos totales
+    let totalHours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    // AJUSTE: Restar 8 horas del offset (parece que local_time viene con GMT+8)
+    totalHours -= 8;
+    
+    // Si las horas totales son >= 24, ajustar el día
+    if (totalHours >= 24) {
+      const daysToAdd = Math.floor(totalHours / 24);
+      day += daysToAdd;
+      totalHours = totalHours % 24;
+      
+      // Ajustar mes si el día se pasa
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (day > daysInMonth) {
+        day -= daysInMonth;
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+      }
+    } else if (totalHours < 0) {
+      // Si es negativo, retroceder un día
+      day -= 1;
+      totalHours += 24;
+      
+      if (day < 1) {
+        month -= 1;
+        if (month < 1) {
+          month = 12;
+          year -= 1;
+        }
+        day = new Date(year, month, 0).getDate();
+      }
+    }
+    
+    const yearStr = String(year);
+    const monthStr = String(month).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const hoursStr = String(totalHours).padStart(2, '0');
+    const minutesStr = String(minutes).padStart(2, '0');
+    const secondsStr = String(seconds).padStart(2, '0');
+    
+    const result = `${yearStr}-${monthStr}-${dayStr}T${hoursStr}:${minutesStr}:${secondsStr}.000-05:00`;
+    
+    // DEBUG: Log resultado
+    if (quake.report_number) {
+      console.log(`[Earthquake #${quake.report_number}] peru_datetime:`, result);
+    }
+    
+    // Retornar en formato ISO con timezone de Perú
+    return result;
+  } catch (error) {
+    console.error('Error al convertir fecha/hora local a hora peruana:', error);
+    return null;
+  }
+}
+
+/**
+ * Fallback: Combina utc_date y utc_time y convierte a hora peruana (UTC-5)
+ */
+function getPeruDateTimeFromUTC(quake: Earthquake): string | null {
+  if (!quake.utc_date || !quake.utc_time) return null;
+  
+  try {
+    // Extraer la fecha de utc_date (YYYY-MM-DD)
+    const dateObj = new Date(quake.utc_date);
+    const year = dateObj.getUTCFullYear();
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    
+    // Extraer la hora de utc_time (puede tener días extras como en local_time)
+    const timeObj = new Date(quake.utc_time);
+    const totalSeconds = Math.floor(timeObj.getTime() / 1000);
+    const totalHours = Math.floor(totalSeconds / 3600);
+    const hours = totalHours % 24;
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    const hoursStr = String(hours).padStart(2, '0');
+    const minutesStr = String(minutes).padStart(2, '0');
+    const secondsStr = String(seconds).padStart(2, '0');
+    
+    // Combinar en formato UTC
+    const utcDateTimeString = `${year}-${month}-${day}T${hoursStr}:${minutesStr}:${secondsStr}.000Z`;
+    const utcDateTime = new Date(utcDateTimeString);
+    
+    if (Number.isNaN(utcDateTime.getTime())) return null;
+    
+    // Convertir a hora peruana (UTC-5)
+    const peruDateTime = new Date(utcDateTime.getTime() - 5 * 60 * 60 * 1000);
+    
+    // Formatear como ISO con timezone de Perú
+    const peruYear = peruDateTime.getUTCFullYear();
+    const peruMonth = String(peruDateTime.getUTCMonth() + 1).padStart(2, '0');
+    const peruDay = String(peruDateTime.getUTCDate()).padStart(2, '0');
+    const peruHours = String(peruDateTime.getUTCHours()).padStart(2, '0');
+    const peruMinutes = String(peruDateTime.getUTCMinutes()).padStart(2, '0');
+    const peruSeconds = String(peruDateTime.getUTCSeconds()).padStart(2, '0');
+    
+    return `${peruYear}-${peruMonth}-${peruDay}T${peruHours}:${peruMinutes}:${peruSeconds}.000-05:00`;
+  } catch (error) {
+    console.error('Error al convertir fecha/hora UTC a hora peruana:', error);
+    return null;
+  }
+}
+
 function getEarthquakeYear(quake: Earthquake): string | null {
-  const dateString = quake.local_date || quake.utc_date || quake.datetime_utc || null;
+  const dateString = quake.peru_datetime || quake.local_date || quake.utc_date || quake.datetime_utc || null;
   if (!dateString) return null;
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return null;
@@ -388,7 +529,13 @@ export async function getEarthquakes(): Promise<Earthquake[]> {
       return [];
     }
 
-    return earthquakesArray.map((quake: Earthquake) => applyEarthquakeMapFallbacks(quake));
+    return earthquakesArray.map((quake: Earthquake) => {
+      const quakeWithPeruTime = {
+        ...quake,
+        peru_datetime: getPeruDateTime(quake),
+      };
+      return applyEarthquakeMapFallbacks(quakeWithPeruTime);
+    });
   } catch (error) {
     console.error('Error al obtener sismos:', error);
     return [];

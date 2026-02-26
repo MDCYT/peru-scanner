@@ -92,6 +92,7 @@ export interface Earthquake {
   utc_date: string | null;
   utc_time: string | null;
   datetime_utc: string | null;
+  peru_datetime?: string | null; // Fecha y hora combinada en hora peruana
   latitude: string;
   longitude: string;
   reference: string | null;

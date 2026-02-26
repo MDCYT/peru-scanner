@@ -697,7 +697,7 @@ export default function MapComponent({
               return null;
             }
 
-            const dateValue = quake.local_date || quake.datetime_utc || quake.utc_date || '';
+            const dateValue = quake.peru_datetime || quake.local_date || quake.datetime_utc || quake.utc_date || '';
             const date = dateValue ? new Date(dateValue) : null;
             const color = getEarthquakeColor(Number.isFinite(magnitude) ? magnitude : 0);
             const radius = getEarthquakeRadiusMeters(Number.isFinite(magnitude) ? magnitude : 0);
@@ -882,7 +882,7 @@ export default function MapComponent({
                           )}
                         </div>
                       )}
-                      {emergencia.codigoSinpad && !emergencia.codigoSinpad.startsWith('INDECI-') && (
+                      {emergencia.fuente === 'bomberos' && emergencia.codigoSinpad && (
                         <a
                           href={`https://sgonorte.bomberosperu.gob.pe/24horas/Home/Map?numparte=${emergencia.codigoSinpad}`}
                           target="_blank"

@@ -78,7 +78,7 @@ export default function Dashboard({
   });
 
   const sismosRecientes = earthquakes.filter((q) => {
-    const fecha = new Date(q.local_date || q.datetime_utc || q.utc_date || '');
+    const fecha = new Date(q.peru_datetime || q.local_date || q.datetime_utc || q.utc_date || '');
     if (Number.isNaN(fecha.getTime())) return false;
     const hace24Horas = new Date();
     hace24Horas.setHours(hace24Horas.getHours() - 24);

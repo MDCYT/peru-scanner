@@ -715,7 +715,7 @@ export default function HackerMapContainer({
 
               if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
-              const dateValue = quake.local_date || quake.datetime_utc || quake.utc_date || '';
+              const dateValue = quake.peru_datetime || quake.local_date || quake.datetime_utc || quake.utc_date || '';
               const date = dateValue ? new Date(dateValue) : null;
               const color = getHackerEarthquakeColor(Number.isFinite(magnitude) ? magnitude : 0);
               const radius = getEarthquakeRadiusMeters(Number.isFinite(magnitude) ? magnitude : 0);
